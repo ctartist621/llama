@@ -17,6 +17,15 @@ const assetMatcher = {
   easy_to_borrow: expect.toBeBoolean()
 }
 
+const barsMatcher = {
+  t: expect.toBeNumber(),
+  o: expect.toBeNumber(),
+  h: expect.toBeNumber(),
+  l: expect.toBeNumber(),
+  c: expect.toBeNumber(),
+  v: expect.toBeNumber(),
+}
+
 describe('Alpaca', () => {
   describe('API', () => {
     test('Get All Assets', done => {
@@ -33,6 +42,15 @@ describe('Alpaca', () => {
       alpaca.getAsset("AAPL", (err, asset) => {
         expect(err).toBeUndefined()
         expect(asset).toMatchObject(assetMatcher)
+        done()
+      })
+    }, TIMEOUT)
+    test('Get Bars', done => {
+      expect.assertions(3);
+      alpaca.getBars("1D", "AAPL", {}, (err, bars) => {
+        expect(err).toBeUndefined()
+        expect(bars).toBeArray()
+        expect(bars[0]).toMatchObject(barsMatcher)
         done()
       })
     }, TIMEOUT)
