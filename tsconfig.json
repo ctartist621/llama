@@ -4,6 +4,15 @@
     "module": "commonjs",
     "strict": true,
     "noImplicitAny": false,
-    "esModuleInterop": true
+    "noEmit": true,
+    "lib": [
+      "esnext",
+      "dom"
+    ],
+    "esModuleInterop": true,
+    "typeRoots": [
+      "typings",
+      "node_modules/@types/"
+    ]
   }
 }

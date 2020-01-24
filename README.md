@@ -11,7 +11,7 @@ Responsible for gathering Level I Market Data from the REST Api.
 
 
 ### Quant
-Responsible for deciding what symbols the Broker should trade by running an offline analysis on all assets.  Any assets that pass the filter will be passed onto the broker for trading.
+Responsible for deciding what symbols the Broker should trade by running an off-line analysis on all assets.  Any assets that pass the filter will be passed onto the broker for trading.
 
 ### Broker
 For all assets that will be traded, the broker will subscribe to the websocket stream for those assets to determine what bid to open the position at, and then maintain the stream to determine when to close the position.  Only after closing the position will the topics for a particular asset be unsubscribed.
