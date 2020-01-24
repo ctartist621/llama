@@ -14,11 +14,31 @@ class Alpaca {
   }
 
   getAllAssets (cb: Function) {
-    this.client.getAssets({})
-    .then((assets: any) => {
-      cb(undefined,assets)
-    }).catch(cb);
+    this.limiter.removeTokens(1, (err, remainingRequests)=> {
+      if (err) {
+        cb(err)
+      } else {
+        this.client.getAssets({})
+        .then((assets: any) => {
+          cb(undefined, assets)
+        }).catch(cb);
+      }
+    })
   }
+
+  getAsset(symbol: string, cb: Function) {
+    this.limiter.removeTokens(1, (err, remainingRequests) => {
+      if (err) {
+        cb(err)
+      } else {
+        this.client.getAsset(symbol)
+        .then((asset: any) => {
+          cb(undefined, asset)
+        }).catch(cb);
+      }
+    })
+  }
+
 }
 
 export default Alpaca

@@ -28,6 +28,14 @@ describe('Alpaca', () => {
         done()
       })
     }, TIMEOUT)
+    test('Get Assets', done => {
+      expect.assertions(2);
+      alpaca.getAsset("AAPL", (err, asset) => {
+        expect(err).toBeUndefined()
+        expect(asset).toMatchObject(assetMatcher)
+        done()
+      })
+    }, TIMEOUT)
   })
 })
 
