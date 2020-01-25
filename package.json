@@ -6,8 +6,8 @@
   "scripts": {
     "devHistorian": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f historian",
     "dev_info": "NODE_ENV=localDev LOG_LEVEL=info ts-node index.ts -f historian",
-    "heroku_historian": "ts-node index.ts -f historian",
-    "test": "NODE_ENV=dev jest",
+    "heroku_historian": "NODE_ENV=heroku_dev ts-node index.ts -f historian",
+    "test": "NODE_ENV=localDev jest",
     "test_local": "NODE_ENV=localDev jest"
   },
   "author": "David B Mittelman",
