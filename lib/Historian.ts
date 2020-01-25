@@ -30,7 +30,8 @@ export default class Historian {
     this.barQueue = async.queue((bar: IAssetBar, callback: async.ErrorCallback) => { this.processBar(bar, callback) }, ASYNC_LIMIT)
 
     this.assetQueue.drain(function() {
-      console.log('all items have been processed');
+      logger.log('info', 'all items have been processed');
+      process.exit()
     })
 
     this.assetQueue.error(function(err, task) {

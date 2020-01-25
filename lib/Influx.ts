@@ -2,6 +2,9 @@ import config from 'config'
 import needle from "needle"
 import _ from 'lodash'
 
+import Logger from "./Logger"
+const logger = new Logger("Influx")
+
 export default class Influx {
   options: any
   conf: any
@@ -35,8 +38,13 @@ export default class Influx {
   }
 
   write(measurement: String, tags: any, fields: any, timestamp: Number, cb: Function) {
-
-    needle.post(this.endpoints.write, this.getLine(measurement, tags, fields, timestamp), this.options, function(err, resp, body) {
+    const line = this.getLine(measurement, tags, fields, timestamp)
+    needle.post(this.endpoints.write, line, this.options, function(err, resp, body) {
+      if(err) {
+        logger.log('error', err)
+      } else {
+        logger.log('debug', `Point recorded: ${line}`)
+      }
       cb(err, body)
     })
 

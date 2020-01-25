@@ -4,10 +4,9 @@
   "description": "Day Trading Bot",
   "main": "index.ts",
   "scripts": {
-    "dev": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts",
-    "dev_info": "NODE_ENV=localDev LOG_LEVEL=info ts-node index.ts",
-
-    "heroku_historian": "ts-node -f historian",
+    "devHistorian": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f historian",
+    "dev_info": "NODE_ENV=localDev LOG_LEVEL=info ts-node index.ts -f historian",
+    "heroku_historian": "ts-node index.ts -f historian",
     "test": "NODE_ENV=dev jest",
     "test_local": "NODE_ENV=localDev jest"
   },
@@ -17,6 +16,7 @@
     "@alpacahq/alpaca-trade-api": "^1.2.7",
     "@influxdata/influx": "^0.5.5",
     "async": "^3.1.1",
+    "commander": "^4.1.0",
     "config": "^3.2.4",
     "ioredis": "^4.14.1",
     "limiter": "^1.1.5",
