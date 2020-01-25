@@ -1,5 +1,5 @@
 import Alpaca from '../../lib/Alpaca'
-import 'jest-extended';
+import 'jest-extended'
 
 const alpaca = new Alpaca()
 

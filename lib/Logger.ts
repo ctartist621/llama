@@ -6,7 +6,7 @@ export default class Logger {
   constructor(context?: string) {
     this.context = context ? `[${context}] ` : ""
     this.logger =  winston.createLogger({
-      level: 'info',
+      level: process.env.LOG_LEVEL || 'info',
       format: winston.format.json(),
       transports: [
         //
@@ -17,6 +17,12 @@ export default class Logger {
         new winston.transports.File({ filename: 'combined.log' })
       ]
     });
+
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.add(new winston.transports.Console({
+        format: winston.format.simple()
+      }));
+    }
   }
 
   private logString(l:string) {

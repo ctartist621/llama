@@ -4,24 +4,31 @@
   "description": "Day Trading Bot",
   "main": "index.ts",
   "scripts": {
-    "dev": "NODE_ENV=dev node index.js",
+    "dev": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts",
     "test": "NODE_ENV=dev jest",
-    "test_local": "NODE_ENV=local jest"
+    "test_local": "NODE_ENV=localDev jest"
   },
   "author": "David B Mittelman",
   "license": "UNLICENSED",
   "dependencies": {
     "@alpacahq/alpaca-trade-api": "^1.2.7",
+    "@influxdata/influx": "^0.5.5",
+    "async": "^3.1.1",
     "config": "^3.2.4",
     "ioredis": "^4.14.1",
     "limiter": "^1.1.5",
+    "lodash": "^4.17.15",
+    "moment": "^2.24.0",
+    "needle": "^2.4.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.8.3",
     "@babel/preset-env": "^7.8.3",
     "@babel/preset-typescript": "^7.8.3",
+    "@types/async": "^3.0.5",
     "@types/jest": "24.0.19",
+    "@types/lodash": "^4.14.149",
     "@types/node": "^13.5.0",
     "babel-jest": "^25.1.0",
     "jest": "^25.1.0",

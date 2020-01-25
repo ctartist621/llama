@@ -1,6 +1,6 @@
 import Redis from '../../lib/Redis'
 import R from 'ioredis'
-import 'jest-extended';
+import 'jest-extended'
 import config from 'config'
 
 const redis = new Redis()
@@ -9,6 +9,7 @@ const r = new R(config.get('redis'))
 const TIMEOUT = 5000
 
 const item = { foo: 'bar' }
+
 describe('Redis', () => {
   beforeEach(done => {
     r.lpush("testList", JSON.stringify(item), done)

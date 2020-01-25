@@ -1,3 +1,4 @@
+/// <reference path="../typings/index.d.ts"/>
 
 const A = require('@alpacahq/alpaca-trade-api')
 import config from 'config'
@@ -7,15 +8,7 @@ import Logger from "./Logger"
 const logger = new Logger("Alpaca")
 import Limiter from 'limiter'
 
-interface barOptions {
-  limit?: Number;
-  start?: Date;
-  end?: Date;
-  after?: Date;
-  until?: Date;
-}
-
-class Alpaca {
+export default class Alpaca {
   client: any
   limiter: Limiter.RateLimiter
   constructor() {
@@ -23,47 +16,42 @@ class Alpaca {
     this.limiter = new Limiter.RateLimiter(200, 'minute') // 200/min https://docs.alpaca.markets/api-documentation/api-v2/
   }
 
-  getAllAssets(cb: Function) {
+  private throttle(func: Function, cb: Function) {
     this.limiter.removeTokens(1, (err, remainingRequests) => {
+      logger.log('silly', `Remaining Alpaca requests: ${remainingRequests}`)
       if (err) {
         cb(err)
       } else {
-        this.client.getAssets({})
-          .then((assets: any) => {
-            logger.log('info', `Retrieved ${assets.length} asset records`)
-            cb(undefined, assets)
-          }).catch(cb);
+        func
       }
     })
+  }
+
+  getAllAssets(cb: Function) {
+    const func = this.client.getAssets({})
+    .then((assets: IAsset[]) => {
+      logger.log('info', `Retrieved ${assets.length} asset records`)
+      cb(undefined, assets)
+    }).catch(cb);
+
+    this.throttle(func, cb)
   }
 
   getAsset(symbol: string, cb: Function) {
-    this.limiter.removeTokens(1, (err, remainingRequests) => {
-      if (err) {
-        cb(err)
-      } else {
-        this.client.getAsset(symbol)
-          .then((asset: any) => {
-            cb(undefined, asset)
-          }).catch(cb);
-      }
-    })
+    const func = this.client.getAsset(symbol)
+      .then((asset: IAsset) => {
+        cb(undefined, asset)
+      }).catch(cb);
+
+    this.throttle(func, cb)
   }
 
-  getBars(timeframe: 'minute' | '1Min' | '5Min' | '15Min' | 'day' | '1D', symbol: string, options: barOptions, cb: Function) {
-    this.limiter.removeTokens(1, (err, remainingRequests) => {
-      if (err) {
-        cb(err)
-      } else {
-        this.client.getBars(timeframe, symbol, options)
-          .then((bars: any) => {
-            cb(undefined, bars[symbol])
-          }).catch(cb);
-      }
-    })
+  getBars(timeframe: 'minute' | '1Min' | '5Min' | '15Min' | 'day' | '1D', symbol: string, options: IBarOptions, cb: Function) {
+    const func = this.client.getBars(timeframe, symbol, options)
+      .then((bars: IBar) => {
+        cb(undefined, bars[symbol])
+      }).catch(cb);
+
+    this.throttle(func, cb)
   }
-
-
 }
-
-export default Alpaca
