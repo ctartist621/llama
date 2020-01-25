@@ -5,7 +5,8 @@
   "main": "index.ts",
   "scripts": {
     "dev": "NODE_ENV=dev node index.js",
-    "test": "NODE_ENV=dev jest"
+    "test": "NODE_ENV=dev jest",
+    "test_local": "NODE_ENV=local jest"
   },
   "author": "David B Mittelman",
   "license": "UNLICENSED",
