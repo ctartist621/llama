@@ -7,19 +7,23 @@ import _ from 'lodash'
 import Logger from "./Logger"
 const logger = new Logger("Alpaca")
 import Limiter from 'limiter'
+import retry from 'retry'
+
+const ALPACA_RATE_LIMIT = 200 // 200/min https://docs.alpaca.markets/api-documentation/api-v2/
 
 export default class Alpaca {
   client: any
   limiter: Limiter.RateLimiter
   constructor() {
     this.client = new A(config.get('alpaca'))
-    this.limiter = new Limiter.RateLimiter(200, 'minute') // 200/min https://docs.alpaca.markets/api-documentation/api-v2/
+    this.limiter = new Limiter.RateLimiter(ALPACA_RATE_LIMIT, 'minute')
   }
 
   private throttle(func: Function, cb: Function) {
     this.limiter.removeTokens(1, (err, remainingRequests) => {
       logger.log('silly', `Remaining Alpaca requests: ${remainingRequests}`)
       if (err) {
+        console.log(err)
         cb(err)
       } else {
         func
@@ -47,11 +51,28 @@ export default class Alpaca {
   }
 
   getBars(timeframe: 'minute' | '1Min' | '5Min' | '15Min' | 'day' | '1D', symbol: string, options: IBarOptions, cb: Function) {
-    const func = this.client.getBars(timeframe, symbol, options)
-      .then((bars: IBar) => {
-        cb(undefined, bars[symbol])
-      }).catch(cb);
+    const operation = retry.operation({
+      forever: true,
+      factor: 2,
+      minTimeout: 1000,
+      maxTimeout: Infinity,
+      randomize: true,
+    })
 
-    this.throttle(func, cb)
+    const func = operation.attempt((currentAttempt) => {
+      this.client.getBars(timeframe, symbol, options)
+        .then((bars: IBar) => {
+          cb(undefined, bars[symbol])
+        }).catch((err) => {
+          logger.log('warn', `Retrying bar request ${symbol} ${timeframe}`)
+          if(operation.retry(err)) {
+            return
+          } else {
+            cb(err ? operation.mainError() : null);
+          }
+        });
+
+      this.throttle(func, cb)
+    })
   }
 }

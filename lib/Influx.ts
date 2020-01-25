@@ -2,7 +2,6 @@ import config from 'config'
 import needle from "needle"
 import _ from 'lodash'
 
-
 export default class Influx {
   options: any
   conf: any
@@ -20,7 +19,7 @@ export default class Influx {
     }
   }
 
-  getLine(measurement: string, tags: any, fields: any, timestamp: number) {
+  getLine(measurement: String, tags: any, fields: any, timestamp: Number) {
     let tStr: string = ""
     let fStr: string = ""
 
@@ -35,7 +34,7 @@ export default class Influx {
     return `${measurement}${tStr} ${_.trimStart(fStr, ',')} ${timestamp}`
   }
 
-  write(measurement: string, tags: any, fields: any, timestamp: number, cb: Function) {
+  write(measurement: String, tags: any, fields: any, timestamp: Number, cb: Function) {
 
     needle.post(this.endpoints.write, this.getLine(measurement, tags, fields, timestamp), this.options, function(err, resp, body) {
       cb(err, body)

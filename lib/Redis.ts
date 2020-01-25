@@ -20,4 +20,12 @@ export default class Redis {
       }
     })
   }
+
+  storeAsset(asset: IAsset, cb) {
+    this.client.hmset(`asset_${asset.symbol}`, asset, cb)
+  }
+
+  getAsset(symbol: String, cb) {
+    this.client.hgetall(`asset_${symbol}`, cb)
+  }
 }

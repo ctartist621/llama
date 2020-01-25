@@ -2,11 +2,11 @@ declare module "config"
 declare module "@alpacahq/alpaca-trade-api"
 
 interface IAsset {
-  id: String;
-  class: String;
-  exchange: String;
-  symbol: String;
-  status: String;
+  id: string;
+  class: string;
+  exchange: string;
+  symbol: string;
+  status: string;
   tradable: Boolean;
   marginable: Boolean;
   shortable: Boolean;
@@ -14,19 +14,29 @@ interface IAsset {
 }
 
 interface IBarOptions {
-  limit?: Number;
+  limit?: number;
   start?: Date;
   end?: Date;
   after?: Date;
   until?: Date;
 }
 
-
 interface IBar {
-  t: Number;
-  o: Number;
-  h: Number;
-  l: Number;
-  c: Number;
-  v: Number;
+  t: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+}
+
+interface IAssetBar {
+  symbol: string;
+  timeframe: string;
+  t: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
 }

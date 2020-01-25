@@ -5,6 +5,9 @@
   "main": "index.ts",
   "scripts": {
     "dev": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts",
+    "dev_info": "NODE_ENV=localDev LOG_LEVEL=info ts-node index.ts",
+
+    "heroku_historian": "ts-node -f historian",
     "test": "NODE_ENV=dev jest",
     "test_local": "NODE_ENV=localDev jest"
   },
@@ -20,6 +23,7 @@
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
     "needle": "^2.4.0",
+    "retry": "^0.12.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
