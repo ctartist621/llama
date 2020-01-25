@@ -3,6 +3,8 @@ const A = require('@alpacahq/alpaca-trade-api')
 import config from 'config'
 import _ from 'lodash'
 
+import Logger from "./Logger"
+const logger = new Logger("Alpaca")
 import Limiter from 'limiter'
 
 interface barOptions {
@@ -28,6 +30,7 @@ class Alpaca {
       } else {
         this.client.getAssets({})
           .then((assets: any) => {
+            logger.log('info', `Retrieved ${assets.length} asset records`)
             cb(undefined, assets)
           }).catch(cb);
       }

@@ -13,7 +13,8 @@
     "@alpacahq/alpaca-trade-api": "^1.2.7",
     "config": "^3.2.4",
     "ioredis": "^4.14.1",
-    "limiter": "^1.1.5"
+    "limiter": "^1.1.5",
+    "winston": "^3.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.8.3",
