@@ -6,7 +6,7 @@ import Alpaca from './Alpaca'
 import Influx from './Influx'
 import Redis from './Redis'
 
-const ASYNC_LIMIT = 10
+const ASYNC_LIMIT = 2
 const ASSET_INTERVAL = 3600000
 
 import Logger from "./Logger"
@@ -66,7 +66,7 @@ export default class Historian {
       bars: (autoCallback: async.ErrorCallback) => {
         const timeframes = ['1Min', '5Min', '15Min', '1D']
         if(asset.tradable) {
-          async.each(timeframes, (timeframe: string, eachCallback: async.ErrorCallback) => {
+          async.eachLimit(timeframes, ASYNC_LIMIT, (timeframe: string, eachCallback: async.ErrorCallback) => {
             logger.log('debug', `Retrieving ${timeframe} bars for ${asset.symbol}`)
             this.alpaca.getBars(timeframe, asset.symbol, {}, (err, bars: IBar[]) => {
               if (err) {
