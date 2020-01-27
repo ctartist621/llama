@@ -49,13 +49,12 @@ export default class Influx {
     })
   }
 
-  batchWrite(measurement: String, tags: any, fields: any, timestamp: Number, cb: Function) {
-    const line = this.getLine(measurement, tags, fields, timestamp)
-    needle.post(this.endpoints.write, line, this.options, function(err, resp, body) {
+  batchWrite(lines, cb: Function) {
+    needle.post(this.endpoints.write, lines, this.options, function(err, resp, body) {
       if (err) {
         logger.log('error', err)
       } else {
-        logger.log('debug', `Point recorded: ${line}, ${JSON.stringify(body)}`)
+        logger.log('debug', `${lines.length} Points recorded`)
       }
       cb(err, body)
     })

@@ -6,101 +6,136 @@ import Alpaca from './Alpaca'
 import Influx from './Influx'
 import Redis from './Redis'
 
-const ASYNC_LIMIT = 2
-const ASSET_INTERVAL = 3600000
+const ASYNC_LIMIT = 10
+
+const ALPACA_SYMBOL_LIMIT = 200
+const INFLUX_WRITE_LIMIT = 5000 //5000-10000
+const ALPACA_BAR_LIMIT = INFLUX_WRITE_LIMIT / ALPACA_SYMBOL_LIMIT
 
 import Logger from "./Logger"
 const logger = new Logger("Historian")
+const CronJob = require('cron').CronJob;
+
+const MARKET_TIMEZONE = 'America/New_York'
 
 export default class Historian {
-  alpaca: any
-  influx: Influx
-  redis: Redis
+  private alpaca: any
+  private influx: Influx
+  private redis: Redis
 
-  fetchAssetInterval: any
-  assetQueue: any
-  barQueue: any
+  private cronJobs: any
+  public symbols: string[]
 
   constructor(a: Alpaca, i: Influx, r: Redis) {
     this.alpaca = a
     this.influx = i
     this.redis = r
+    this.cronJobs = {}
+    this.symbols = []
 
-    this.assetQueue = async.queue((asset: IAsset, callback: async.ErrorCallback) => { this.processAsset(asset, callback) }, ASYNC_LIMIT)
-    this.barQueue = async.queue((bar: IAssetBar, callback: async.ErrorCallback) => { this.processBar(bar, callback) }, ASYNC_LIMIT)
-
-    this.assetQueue.drain(function() {
-      logger.log('info', 'all items have been processed');
-      process.exit()
-    })
-
-    this.assetQueue.error(function(err, task) {
-      console.error('task experienced an error', err, task);
-    })
-
-    logger.log('info', "Fetch Assets Starting")
-    this.fetchAssetInterval = setInterval(this.fetchAssets, ASSET_INTERVAL) //Hourly check
-    logger.log('info', "Fetch Assets Started")
+    this.cronJobs.fetchAssets = new CronJob('0 0 * * *', () => {
+      this.fetchAssets()
+    }, null, true, MARKET_TIMEZONE);
+    this.cronJobs.fetchAssets.start();
 
     this.fetchAssets()
   }
 
   private fetchAssets() {
-    logger.log('info', "Fetching Assets")
-    this.alpaca.getAllAssets((err, assets) => {
+    logger.log('info', "Fetch Assets Starting")
+    this.alpaca.getAllAssets((err: any, assets: IAsset[]) => {
       if (err) {
         logger.log('error', err)
       } else {
-        this.assetQueue.push(assets)
-        logger.log('info', `Asset fetch complete. ${assets.length} assets queued.`)
+        async.each(assets, (asset: IAsset, eachCallback: async.ErrorCallback) => {
+          this.redis.storeAsset(asset, eachCallback)
+        },(err) => {
+          if(err) {
+            logger.log('error', err)
+          } else {
+            logger.log('info', `${assets.length} Assets Stored`)
+            this.symbols = _.map(assets, 'symbol')
+            // this.symbols = _.map(_.filter(assets, { tradable: true } as any), 'symbol')
+            this.startBarFetching()
+          }
+        })
       }
     })
   }
 
-  private processAsset(asset: IAsset, cb: async.ErrorCallback) {
-    async.auto({
-      storeAsset: (autoCallback: async.ErrorCallback) => {
-        logger.log('debug', `Storing Asset ${asset.symbol}`)
-        this.redis.storeAsset(asset, autoCallback)
-      },
-      bars: (autoCallback: async.ErrorCallback) => {
-        const timeframes = ['1Min', '5Min', '15Min', '1D']
-        if(asset.tradable) {
-          async.eachLimit(timeframes, ASYNC_LIMIT, (timeframe: string, eachCallback: async.ErrorCallback) => {
-            logger.log('debug', `Retrieving ${timeframe} bars for ${asset.symbol}`)
-            this.alpaca.getBars(timeframe, asset.symbol, {
-              limit: 1000
-            }, (err, bars: IBar[]) => {
-              if (err) {
-                eachCallback(err)
-              } else {
-                let assetBars = _.map(bars, (b: IAssetBar) => {
-                  b.symbol = asset.symbol
-                  b.timeframe = timeframe
-                  return b
-                })
-                this.barQueue.push(assetBars)
-                eachCallback()
-              }
-            })
-          }, autoCallback)
-        } else {
-          logger.log('info', `Not retrieving bars for untradable Asset ${asset.symbol}`)
-          autoCallback()
-        }
-      },
-    }, cb)
+  private startBarFetching() {
+    logger.log('info', "Starting Bar Fetching")
+    this.cronJobs.fetchBars1D = new CronJob('0 23 * * *', () => {
+      this.fetchBars('1D', ALPACA_BAR_LIMIT)
+    }, null, true, MARKET_TIMEZONE);
+    this.cronJobs.fetchBars1D.start();
+    logger.log('info', "Started 1D Bar Cron")
+
+    this.cronJobs.fetchBars15Min = new CronJob('0 0 * * *', () => {
+      this.fetchBars('15Min', ALPACA_BAR_LIMIT)
+    }, null, true, MARKET_TIMEZONE);
+    this.cronJobs.fetchBars15Min.start();
+    logger.log('info', "Started 15Min Bar Cron")
+
+    this.cronJobs.fetchBars5Min = new CronJob('*/15 * * * *', () => {
+      this.fetchBars('5Min', ALPACA_BAR_LIMIT)
+    }, null, true, MARKET_TIMEZONE);
+    this.cronJobs.fetchBars5Min.start();
+    logger.log('info', "Started 5Min Bar Cron")
+
+    this.cronJobs.fetchBars1Min = new CronJob('*/5 * * * *', () => {
+      this.fetchBars('1Min', ALPACA_BAR_LIMIT)
+    }, null, true, MARKET_TIMEZONE);
+    this.cronJobs.fetchBars1Min.start();
+    logger.log('info', "Started 1Min Bar Cron")
+
+    this.fetchBars('1D', ALPACA_BAR_LIMIT)
   }
 
-  processBar(bar: IAssetBar, cb: async.ErrorCallback) {
-    this.influx.write(bar.symbol, {
-      timeframe: bar.timeframe
-    }, {
-      open: bar.o,
-      high: bar.h,
-      low: bar.o,
-      close: bar.c,
-      volume: bar.v
-    }, bar.t, cb)
+  private fetchBars(timeframe: string, limit: number) {
+    const symbolChunks: string[][] = _.chunk(this.symbols, ALPACA_SYMBOL_LIMIT)
+    async.eachLimit(symbolChunks, ASYNC_LIMIT, (chunk: string[], eachCallback: async.ErrorCallback) => {
+      async.auto({
+        getBars: (autoCallback: async.ErrorCallback) => {
+          logger.log('debug', `${timeframe} for ${chunk.length} symbols`)
+          this.alpaca.getBars(timeframe, chunk, {
+            limit
+          }, autoCallback)
+        },
+        storeBars: ['getBars', (results: any, autoCallback: async.ErrorCallback) => {
+          const bars = _.flatten(_.map(results.getBars, (bars: IBar[], symbol: string) => {
+            return _.map(bars, (b: IAssetBar) => {
+              b.symbol = symbol
+              b.timeframe = timeframe
+              return b
+            })
+          }))
+          const lines = _.map(bars, (bar: IAssetBar) => {
+            return this.influx.getLine(bar.symbol, {
+              timeframe: bar.timeframe
+            }, {
+              open: bar.o,
+              high: bar.h,
+              low: bar.o,
+              close: bar.c,
+              volume: bar.v
+            }, bar.t)
+          })
+
+          if(lines.length > 0) {
+            this.influx.batchWrite(lines, autoCallback)
+          } else {
+            logger.log('warn', `No data to write, skipping Influx load.`)
+            autoCallback()
+          }
+        }]
+      }, ASYNC_LIMIT, eachCallback)
+    }, (err: any) => {
+      if (err) {
+        logger.log('error', err)
+      } else {
+        logger.log('info', `${timeframe} Bar Fetch complete`)
+      }
+    })
   }
 }

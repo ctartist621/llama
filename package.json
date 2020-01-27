@@ -5,6 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "devHistorian": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f historian",
+    "Historian": "NODE_ENV=prod LOG_LEVEL=silly ts-node index.ts -f historian",
     "devQuant": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f quant",
     "heroku_historian": "NODE_ENV=heroku_dev ts-node index.ts -f historian",
     "test": "NODE_ENV=localDev jest",
@@ -18,6 +19,7 @@
     "async": "^3.1.1",
     "commander": "^4.1.0",
     "config": "^3.2.4",
+    "cron": "^1.8.2",
     "ioredis": "^4.14.1",
     "limiter": "^1.1.5",
     "lodash": "^4.17.15",

@@ -2,7 +2,7 @@ import R from 'ioredis'
 import config from 'config'
 import async from 'async'
 
-const ASYNC_LIMIT = 2
+const ASYNC_LIMIT = 10
 
 export default class Redis {
   client: R
