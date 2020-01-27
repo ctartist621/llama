@@ -63,23 +63,25 @@ export default class Historian {
         logger.log('debug', `Storing Asset ${asset.symbol}`)
         this.redis.storeAsset(asset, autoCallback)
       },
-      bars_1D: (autoCallback: async.ErrorCallback) => {
+      bars: (autoCallback: async.ErrorCallback) => {
+        const timeframes = ['1Min', '5Min', '15Min', '1D']
         if(asset.tradable) {
-          const timeframe = '1D'
-          logger.log('debug', `Retrieving 1D bars for ${asset.symbol}`)
-          this.alpaca.getBars(timeframe, asset.symbol, {}, (err, bars: IBar[]) => {
-            if (err) {
-              autoCallback(err)
-            } else {
-              let assetBars = _.map(bars, (b: IAssetBar) => {
-                b.symbol = asset.symbol
-                b.timeframe = timeframe
-                return b
-              })
-              this.barQueue.push(assetBars)
-              autoCallback()
-            }
-          })
+          async.each(timeframes, (timeframe: string, eachCallback: async.ErrorCallback) => {
+            logger.log('debug', `Retrieving ${timeframe} bars for ${asset.symbol}`)
+            this.alpaca.getBars(timeframe, asset.symbol, {}, (err, bars: IBar[]) => {
+              if (err) {
+                eachCallback(err)
+              } else {
+                let assetBars = _.map(bars, (b: IAssetBar) => {
+                  b.symbol = asset.symbol
+                  b.timeframe = timeframe
+                  return b
+                })
+                this.barQueue.push(assetBars)
+                eachCallback()
+              }
+            })
+          }, autoCallback)
         } else {
           logger.log('info', `Not retrieving bars for untradable Asset ${asset.symbol}`)
           autoCallback()

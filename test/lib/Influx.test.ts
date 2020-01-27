@@ -6,11 +6,15 @@ const influx = new Influx()
 
 const TIMEOUT = 5000
 
+const t: Number = moment().unix()
+
 describe('Influx', () => {
   describe('Line', () => {
-    test('Line with just one value', () => {
-      const line = influx.getLine('test',null ,{val1: 1}, moment().unix())
-      console.log(line)
-    }, TIMEOUT)
+    // test.each([
+    //   ["No Tags", {} , {field1: 1}, t, "foo"]
+    // ])('Line test %#', (measurement: string, tags: any, fields: any, timestamp: number, expected: string) => {
+    //   const line = influx.getLine(measurement, tags, fields, timestamp)
+    //   console.log(line)
+    // }, TIMEOUT)
   })
 })

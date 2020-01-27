@@ -43,7 +43,7 @@ export default class Influx {
       if(err) {
         logger.log('error', err)
       } else {
-        logger.log('debug', `Point recorded: ${line}`)
+        logger.log('debug', `Point recorded: ${line}, ${JSON.stringify(body)}`)
       }
       cb(err, body)
     })
