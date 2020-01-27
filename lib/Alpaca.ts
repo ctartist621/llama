@@ -62,6 +62,7 @@ export default class Alpaca {
     const func = operation.attempt((currentAttempt) => {
       this.client.getBars(timeframe, symbol, options)
         .then((bars: IBar) => {
+          logger.log('info', `Bars retrieved ${symbol} ${timeframe}`)
           cb(undefined, bars[symbol])
         }).catch((err) => {
           logger.log('warn', `Retrying bar request ${symbol} ${timeframe}`)

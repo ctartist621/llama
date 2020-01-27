@@ -68,7 +68,9 @@ export default class Historian {
         if(asset.tradable) {
           async.eachLimit(timeframes, ASYNC_LIMIT, (timeframe: string, eachCallback: async.ErrorCallback) => {
             logger.log('debug', `Retrieving ${timeframe} bars for ${asset.symbol}`)
-            this.alpaca.getBars(timeframe, asset.symbol, {}, (err, bars: IBar[]) => {
+            this.alpaca.getBars(timeframe, asset.symbol, {
+              limit: 1000
+            }, (err, bars: IBar[]) => {
               if (err) {
                 eachCallback(err)
               } else {
