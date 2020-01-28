@@ -18,7 +18,7 @@ export default class Influx {
       }
     }
     this.endpoints = {
-      write: `${this.conf.host}/api/v2/write?org=${this.conf.org}&bucket=${this.conf.bucket}&precision=s`
+      write: `${this.conf.host}/api/v2/write?org=${this.conf.org}&&precision=s`
     }
   }
 
@@ -37,25 +37,26 @@ export default class Influx {
     return `${measurement}${tStr} ${_.trimStart(fStr, ',')} ${timestamp}`
   }
 
-  write(measurement: String, tags: any, fields: any, timestamp: Number, cb: Function) {
+  write(bucket: String, measurement: String, tags: any, fields: any, timestamp: Number, cb: Function) {
     const line = this.getLine(measurement, tags, fields, timestamp)
-    needle.post(this.endpoints.write, line, this.options, function(err, resp, body) {
+    needle.post(`${this.endpoints.write}&bucket=${bucket}`, line, this.options, function(err, resp, body) {
       if (err) {
         logger.log('error', err)
       } else {
-        logger.log('debug', `Point recorded: ${line}, ${JSON.stringify(body)}`)
+        logger.log('silly', `Point recorded: ${line}, ${JSON.stringify(body)}`)
       }
       cb(err, body)
     })
   }
 
-  batchWrite(measurement: String, tags: any, fields: any, timestamp: Number, cb: Function) {
-    const line = this.getLine(measurement, tags, fields, timestamp)
-    needle.post(this.endpoints.write, line, this.options, function(err, resp, body) {
+  batchWrite(bucket: String, lines: string[], cb: Function) {
+    // const l  = _.join(lines, '\n')
+    // console.log(l)
+    needle.post(`${this.endpoints.write}&bucket=${bucket}`, _.join(lines, '\n'), this.options, function(err, resp, body) {
       if (err) {
         logger.log('error', err)
       } else {
-        logger.log('debug', `Point recorded: ${line}, ${JSON.stringify(body)}`)
+        logger.log('silly', `${lines.length} Points recorded`)
       }
       cb(err, body)
     })

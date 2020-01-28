@@ -21,7 +21,11 @@ export default class Alpaca {
 
   private throttle(func: Function, cb: Function) {
     this.limiter.removeTokens(1, (err, remainingRequests) => {
-      logger.log('silly', `Remaining Alpaca requests: ${remainingRequests}`)
+      if (remainingRequests < ALPACA_RATE_LIMIT/2) {
+        logger.log('warn', `Remaining Alpaca requests: ${remainingRequests}`)
+      } else {
+        logger.log('silly', `Remaining Alpaca requests: ${remainingRequests}`)
+      }
       if (err) {
         console.log(err)
         cb(err)
@@ -50,7 +54,7 @@ export default class Alpaca {
     this.throttle(func, cb)
   }
 
-  getBars(timeframe: 'minute' | '1Min' | '5Min' | '15Min' | 'day' | '1D', symbol: string, options: IBarOptions, cb: Function) {
+  getBars(timeframe: 'minute' | '1Min' | '5Min' | '15Min' | 'day' | '1D', symbols: string | string[], options: IBarOptions, cb: Function) {
     const operation = retry.operation({
       forever: true,
       factor: 2,
@@ -59,21 +63,46 @@ export default class Alpaca {
       randomize: true,
     })
 
+    symbols = _.isArray(symbols) ? _.join(symbols, ',') : symbols
     const func = operation.attempt((currentAttempt) => {
-      this.client.getBars(timeframe, symbol, options)
+      this.client.getBars(timeframe, symbols, options)
         .then((bars: IBar) => {
-          logger.log('info', `Bars retrieved ${symbol} ${timeframe}`)
-          cb(undefined, bars[symbol])
+          logger.log('debug', `${timeframe} Bars retrieved ${symbols}`)
+          cb(undefined, bars)
         }).catch((err) => {
-          logger.log('warn', `Retrying bar request ${symbol} ${timeframe}`)
-          if(operation.retry(err)) {
-            return
+          logger.log('error', err)
+          if (err = 'StatusCodeError: 500 - {"code":50010000,"message":"internal server error occurred"}') {
+            logger.log('warn', `Alpaca server error, skipping ${symbols} ${timeframe}`)
+            cb()
           } else {
-            cb(err ? operation.mainError() : null);
+            logger.log('warn', `Retrying bar request ${symbols} ${timeframe}`)
+            if (operation.retry(err)) {
+              return
+            } else {
+              cb(err ? operation.mainError() : null);
+            }
           }
         });
 
       this.throttle(func, cb)
     })
+  }
+
+  getClock(cb: Function) {
+    const func = this.client.getClock()
+      .then((clock: IAsset) => {
+        cb(undefined, clock)
+      }).catch(cb);
+
+    this.throttle(func, cb)
+  }
+
+  getNews(symbol: string, cb: Function) {
+    const func = this.client.getNews(symbol)
+      .then((news: IAsset) => {
+        cb(undefined, news)
+      }).catch(cb);
+
+    this.throttle(func, cb)
   }
 }

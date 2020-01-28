@@ -117,3 +117,4 @@ temp/
 .tags_sorted_by_file
 # config/
 tsconfig.ref.json
+/config/prod.ts

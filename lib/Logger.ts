@@ -35,4 +35,8 @@ export default class Logger {
   log(level, l) {
     this.logger.log(level, this.logString(l))
   }
+
+  error(l) {
+    this.logger.error(this.logString(l))
+  }
 }
