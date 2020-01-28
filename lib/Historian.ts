@@ -2,6 +2,12 @@
 
 import _ from 'lodash'
 import async from 'async'
+
+import { extract } from 'article-parser'
+import moment from 'moment'
+import Sentiment from 'sentiment'
+const sentiment = new Sentiment()
+
 import Alpaca from './Alpaca'
 import Influx from './Influx'
 import Redis from './Redis'
@@ -56,14 +62,21 @@ export default class Historian {
             logger.log('info', `${assets.length} Assets Stored`)
             this.symbols = _.map(assets, 'symbol')
             // this.symbols = _.map(_.filter(assets, { tradable: true } as any), 'symbol')
-            this.startBarFetching()
+            this.startDataFetching()
           }
         })
       }
     })
   }
 
-  private startBarFetching() {
+  private startDataFetching() {
+    logger.log('info', "Starting News Fetching")
+    this.cronJobs.fetchBars1D = new CronJob('0 * * * *', () => {
+      this.getRawSentimentData()
+    }, null, true, MARKET_TIMEZONE);
+    this.cronJobs.fetchBars1D.start();
+    logger.log('info', "Started News Fetching Cron")
+
     logger.log('info', "Starting Bar Fetching")
     this.cronJobs.fetchBars1D = new CronJob('0 23 * * *', () => {
       this.fetchBars('1D', ALPACA_BAR_LIMIT)
@@ -90,6 +103,7 @@ export default class Historian {
     logger.log('info', "Started 1Min Bar Cron")
 
     this.fetchBars('1D', ALPACA_BAR_LIMIT)
+    this.getRawSentimentData()
   }
 
   private fetchBars(timeframe: string, limit: number) {
@@ -110,7 +124,7 @@ export default class Historian {
               return b
             })
           }))
-          const lines = _.map(bars, (bar: IAssetBar) => {
+          const lines: any[] = _.map(bars, (bar: IAssetBar) => {
             return this.influx.getLine(bar.symbol, {
               timeframe: bar.timeframe
             }, {
@@ -123,7 +137,7 @@ export default class Historian {
           })
 
           if(lines.length > 0) {
-            this.influx.batchWrite(lines, autoCallback)
+            this.influx.batchWrite('marketData', lines, autoCallback)
           } else {
             logger.log('warn', `No data to write, skipping Influx load.`)
             autoCallback()
@@ -135,6 +149,50 @@ export default class Historian {
         logger.log('error', err)
       } else {
         logger.log('info', `${timeframe} Bar Fetch complete`)
+      }
+    })
+  }
+
+  private getRawSentimentData() {
+    async.eachLimit(this.symbols, ASYNC_LIMIT, (symbol: string, eachCallback: async.ErrorCallback) => {
+      logger.log('info', `Getting raw news sentiment for ${symbol}`)
+      this.alpaca.getNews(symbol, (err: any, news: INews[]) => {
+        if (err) {
+          eachCallback(err)
+        } else {
+          async.mapLimit(news, ASYNC_LIMIT, (n: INews, mapCallback: async.ErrorCallback) => {
+            const t = moment(n.timestamp).unix()
+            async.auto({
+              title: (autoCallback: Function) => {
+                this.influx.write('sentiment', symbol, { source: 'title' }, _.pick(sentiment.analyze(n.title), ['score', 'comparative']), t, autoCallback)
+              },
+              summary: (autoCallback: Function) => {
+                this.influx.write('sentiment', symbol, { source: 'summary' }, _.pick(sentiment.analyze(n.summary), ['score', 'comparative']), t, autoCallback)
+              },
+              article: (autoCallback: Function) => {
+                extract(n.url).then((article) => {
+                  this.influx.write('sentiment', symbol, { source: 'articleContent' }, _.pick(sentiment.analyze(article.content), ['score', 'comparative']), t, autoCallback)
+                }).catch((err) => {
+                  logger.log('debug', `Error extracting article for ${symbol}: ${n.title}`)
+                  autoCallback()
+                })
+              }
+            }, mapCallback)
+          }, (err: any) => {
+              if (err) {
+                logger.log('error', err)
+              } else {
+                logger.log('info', `Raw sentiment generated from ${news.length} news items for ${symbol}`)
+              }
+              eachCallback(err)
+          })
+        }
+      })
+    }, (err: any) => {
+      if (err) {
+        logger.log('error', err)
+      } else {
+        logger.log('info', `Raw sentiment gathered`)
       }
     })
   }

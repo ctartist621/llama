@@ -40,3 +40,14 @@ interface IAssetBar {
   c: number;
   v: number;
 }
+
+interface INews {
+  symbols: string[];
+  timestamp: string;
+  title: string;
+  url: string;
+  source: string;
+  summary: string;
+  image: string;
+  keywords: string[]
+}

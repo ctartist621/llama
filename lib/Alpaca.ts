@@ -21,7 +21,11 @@ export default class Alpaca {
 
   private throttle(func: Function, cb: Function) {
     this.limiter.removeTokens(1, (err, remainingRequests) => {
-      logger.log('silly', `Remaining Alpaca requests: ${remainingRequests}`)
+      if (remainingRequests < ALPACA_RATE_LIMIT/2) {
+        logger.log('warn', `Remaining Alpaca requests: ${remainingRequests}`)
+      } else {
+        logger.log('silly', `Remaining Alpaca requests: ${remainingRequests}`)
+      }
       if (err) {
         console.log(err)
         cb(err)
@@ -63,7 +67,7 @@ export default class Alpaca {
     const func = operation.attempt((currentAttempt) => {
       this.client.getBars(timeframe, symbols, options)
         .then((bars: IBar) => {
-          logger.log('info', `Bars retrieved ${symbols} ${timeframe}`)
+          logger.log('debug', `${timeframe} Bars retrieved ${symbols}`)
           cb(undefined, bars)
         }).catch((err) => {
           logger.log('error', err)
@@ -88,6 +92,15 @@ export default class Alpaca {
     const func = this.client.getClock()
       .then((clock: IAsset) => {
         cb(undefined, clock)
+      }).catch(cb);
+
+    this.throttle(func, cb)
+  }
+
+  getNews(symbol: string, cb: Function) {
+    const func = this.client.getNews(symbol)
+      .then((news: IAsset) => {
+        cb(undefined, news)
       }).catch(cb);
 
     this.throttle(func, cb)
