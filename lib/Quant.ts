@@ -124,7 +124,26 @@ export default class Quant {
           Lagging Indicator
           Used to reveal changes in the strength, direction, momentum, and duration of a trend in a stock’s price.
         */
-        autoCallback()
+        const options = [
+          2, // short period
+          5, // long period
+          9  // signal period
+        ]
+        async.auto({
+          macdClose: (macdAutoCallback) => {
+            tulind.indicators.macd.indicator([data.close], options, (err, output) => {
+              if(err) {
+                macdAutoCallback(err)
+              } else {
+                macdAutoCallback(err, {
+                  macd: output[0],
+                  macd_signal: output[1],
+                  macd_histogram: output[2],
+                })
+              }
+            });
+          },
+        }, autoCallback)
       },
       PSAR: (autoCallback) => {
         /* Parabolic Stop and Reverse (Parabolic SAR)
