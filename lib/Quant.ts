@@ -37,15 +37,15 @@ export default class Quant {
     this.assets = []
     this.cronJobs = {}
 
-    this.redis.getAssetList((err: any, assets: string[]) => {
-      if(err) {
-        logger.error(err)
-      } else {
-        this.assets = assets
-        this.startAnalysis()
-      }
-    })
-    // this.runAnalysis('1D', ['AAPL'])
+    // this.redis.getAssetList((err: any, assets: string[]) => {
+    //   if(err) {
+    //     logger.error(err)
+    //   } else {
+    //     this.assets = assets
+    //     this.startAnalysis()
+    //   }
+    // })
+    this.runAnalysis('1D', ['AAPL'])
   }
 
   private startAnalysis() {
@@ -92,7 +92,7 @@ export default class Quant {
         volatility: ['data', (results:any, autoCallback) => { this.volatility(results.data, autoCallback) }],
         volume: ['data', (results:any, autoCallback) => { this.volume(results.data, autoCallback) }],
       }, (err: any, results: any) => {
-          console.log(results.trend.MACD)
+          console.log(results.trend.PSAR)
           eachCallback(err)
         })
       }, (err) => {
@@ -150,7 +150,17 @@ export default class Quant {
           Leading Indicator
           Used to find potential reversals in the market price direction.
         */
-        autoCallback()
+        const options = [
+          .2,  // acceleration factor step
+          2,   // acceleration factor maximum
+        ]
+        tulind.indicators.psar.indicator([data.high, data.low], options, (err, output) => {
+          if (err) {
+            autoCallback(err)
+          } else {
+            autoCallback(err, output)
+          }
+        });
       },
     }, cb)
   }
