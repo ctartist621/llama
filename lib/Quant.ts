@@ -56,23 +56,23 @@ export default class Quant {
     this.cronJobs.analysis1D.start();
     logger.log('info', "Started 1D Analysis Cron")
 
-    this.cronJobs.analysis15Min = new CronJob('0 0 * * *', () => {
-      this.runAnalysis('15Min')
-    }, null, true, MARKET_TIMEZONE);
-    this.cronJobs.analysis15Min.start();
-    logger.log('info', "Started 15Min Analysis Cron")
+    // this.cronJobs.analysis15Min = new CronJob('0 0 * * *', () => {
+    //   this.runAnalysis('15Min')
+    // }, null, true, MARKET_TIMEZONE);
+    // this.cronJobs.analysis15Min.start();
+    // logger.log('info', "Started 15Min Analysis Cron")
 
-    this.cronJobs.analysis5Min = new CronJob('*/15 * * * *', () => {
-      this.runAnalysis('5Min')
-    }, null, true, MARKET_TIMEZONE);
-    this.cronJobs.analysis5Min.start();
-    logger.log('info', "Started 5Min Analysis Cron")
+    // this.cronJobs.analysis5Min = new CronJob('*/15 * * * *', () => {
+    //   this.runAnalysis('5Min')
+    // }, null, true, MARKET_TIMEZONE);
+    // this.cronJobs.analysis5Min.start();
+    // logger.log('info', "Started 5Min Analysis Cron")
 
-    this.cronJobs.analysis1Min = new CronJob('*/5 * * * *', () => {
-      this.runAnalysis('1Min')
-    }, null, true, MARKET_TIMEZONE);
-    this.cronJobs.analysis1Min.start();
-    logger.log('info', "Started 1Min Analysis Cron")
+    // this.cronJobs.analysis1Min = new CronJob('*/5 * * * *', () => {
+    //   this.runAnalysis('1Min')
+    // }, null, true, MARKET_TIMEZONE);
+    // this.cronJobs.analysis1Min.start();
+    // logger.log('info', "Started 1Min Analysis Cron")
 
     this.runAnalysis('1D')
   }
@@ -92,31 +92,37 @@ export default class Quant {
         volatility: ['data', (results:any, autoCallback) => { this.volatility(results.data, autoCallback) }],
         volume: ['data', (results:any, autoCallback) => { this.volume(results.data, autoCallback) }],
       }, (err: any, results: any) => {
-          console.log(results.momentum.stoch)
+          console.log(results.trend)
           eachCallback(err)
         })
       }, (err) => {
         if(err) {
           logger.error(err)
         }
+        process.exit()
       })
   }
 
   trend(data: any, cb: any) {
     async.auto({
-      movingAverages: (autoCallback) => {
-        /* Moving Averages
+      SMA: (autoCallback) => {
+        /* Simple Moving Average
           Lagging Indicator
           Used to identify trends and reversals, as well as to set up support
           and resistance levels.
         */
-        const options = [
-          5 // period
-        ]
-        async.auto({
-          smaClose: (movingAveragesAutoCallback) => {
-            tulind.indicators.sma.indicator([data.close], options, movingAveragesAutoCallback);
-          }
+        // https://www.investopedia.com/terms/s/sma.asp
+
+        const periods = [5,30, 50,200]
+
+        async.map(periods, (period, mapCallback) => {
+
+          tulind.indicators.sma.indicator([data.close], [period], (err, output) => {
+            let o = {}
+            o[period] = output
+            mapCallback(err, o)
+          });
+
         }, autoCallback)
       },
       MACD: (autoCallback) => {
@@ -124,9 +130,10 @@ export default class Quant {
           Lagging Indicator
           Used to reveal changes in the strength, direction, momentum, and duration of a trend in a stock’s price.
         */
+        // https://www.investopedia.com/terms/m/macd.asp
         const options = [
-          2, // short period
-          5, // long period
+          12, // short period
+          26, // long period
           9  // signal period
         ]
         async.auto({
@@ -150,9 +157,10 @@ export default class Quant {
           Leading Indicator
           Used to find potential reversals in the market price direction.
         */
+        // https://www.investopedia.com/terms/p/parabolicindicator.asp
         const options = [
-          .2,  // acceleration factor step
-          2,   // acceleration factor maximum
+          .02,  // acceleration factor step
+          .2,   // acceleration factor maximum
         ]
         tulind.indicators.psar.indicator([data.high, data.low], options, (err, output) => {
           if (err) {
@@ -172,10 +180,11 @@ export default class Quant {
           Leading Indicator
           Used to predict price turning points by comparing the closing price to its price range.
         */
+        // https://www.investopedia.com/terms/s/stochasticoscillator.asp
         const options = [
-          5, // %k period
-          5, // %k slowing period
-          5, // %d period
+          14, // %k period
+          14, // %k slowing period
+          3, // %d period
         ]
         tulind.indicators.stoch.indicator([
             data.high,
@@ -197,8 +206,9 @@ export default class Quant {
           Leading Indicator
           An oscillator that helps identify price reversals, price extremes, and trend strength.
         */
+        // https://www.investopedia.com/terms/c/commoditychannelindex.asp
         const options = [
-          5, // period
+          20, // period
         ]
         tulind.indicators.cci.indicator([
           data.high,
