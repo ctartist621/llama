@@ -92,7 +92,7 @@ export default class Quant {
         volatility: ['data', (results:any, autoCallback) => { this.volatility(results.data, autoCallback) }],
         volume: ['data', (results:any, autoCallback) => { this.volume(results.data, autoCallback) }],
       }, (err: any, results: any) => {
-          console.log(results.trend.PSAR)
+          console.log(results.momentum.stoch)
           eachCallback(err)
         })
       }, (err) => {
@@ -165,7 +165,49 @@ export default class Quant {
     }, cb)
   }
 
-  momentum(data: any, cb: any) { cb() }
+  momentum(data: any, cb: any) {
+    async.auto({
+      stoch: (autoCallback) => {
+        /* Stochastic Oscillator
+          Leading Indicator
+          Used to predict price turning points by comparing the closing price to its price range.
+        */
+        const options = [
+          5, // %k period
+          5, // %k slowing period
+          5, // %d period
+        ]
+        tulind.indicators.stoch.indicator([
+            data.high,
+            data.low,
+            data.close,
+          ], options, (err, output) => {
+          if (err) {
+            autoCallback(err)
+          } else {
+            autoCallback(err, {
+              stoch_k: output[0],
+              stoch_d: output[1],
+            })
+          }
+        });
+      },
+      CCI: (autoCallback) => {
+        /* Commodity Channel Index (CCI)
+          Leading Indicator
+          An oscillator that helps identify price reversals, price extremes, and trend strength.
+        */
+        autoCallback()
+      },
+      RSI: (autoCallback) => {
+        /* Relative Strength Index (RSI)
+          Leading Indicator
+          Measures recent trading strength, velocity of change in the trend, and magnitude of the move.
+        */
+        autoCallback()
+      },
+    }, cb)
+  }
 
   volatility(data: any, cb: any) { cb() }
 
