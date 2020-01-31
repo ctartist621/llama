@@ -97,6 +97,15 @@ export default class Alpaca {
     this.throttle(func, cb)
   }
 
+  getExchanges(cb: Function) {
+    const func = this.client.getExchanges()
+      .then((clock: IAsset) => {
+        cb(undefined, clock)
+      }).catch(cb);
+
+    this.throttle(func, cb)
+  }
+
   getNews(symbol: string, cb: Function) {
     const func = this.client.getNews(symbol)
       .then((news: IAsset) => {

@@ -1,6 +1,8 @@
 /// <reference path="typings/index.d.ts"/>
 
 import Historian from './lib/Historian'
+import Quant from './lib/Quant'
+
 import Alpaca from './lib/Alpaca'
 import Influx from './lib/Influx'
 import Redis from './lib/Redis'
@@ -24,6 +26,11 @@ switch (program.function) {
   case "historian":
     logger.log('info', "Starting Historian")
     const historian = new Historian(alpaca, influx, redis)
+    break;
+
+  case "quant":
+    logger.log('info', "Starting Quant")
+    const quant = new Quant(alpaca, influx, redis)
     break;
 
   default:

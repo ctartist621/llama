@@ -30,14 +30,14 @@ export default class Historian {
   private redis: Redis
 
   private cronJobs: any
-  public symbols: string[]
+  public assets: string[]
 
   constructor(a: Alpaca, i: Influx, r: Redis) {
     this.alpaca = a
     this.influx = i
     this.redis = r
     this.cronJobs = {}
-    this.symbols = []
+    this.assets = []
 
     this.cronJobs.fetchAssets = new CronJob('0 0 * * *', () => {
       this.fetchAssets()
@@ -54,14 +54,15 @@ export default class Historian {
         logger.log('error', err)
       } else {
         async.each(assets, (asset: IAsset, eachCallback: async.ErrorCallback) => {
+          console.log(asset)
           this.redis.storeAsset(asset, eachCallback)
         },(err) => {
           if(err) {
             logger.log('error', err)
           } else {
             logger.log('info', `${assets.length} Assets Stored`)
-            this.symbols = _.map(assets, 'symbol')
-            // this.symbols = _.map(_.filter(assets, { tradable: true } as any), 'symbol')
+            this.assets = _.map(assets, 'symbol')
+            // this.assets = _.map(_.filter(assets, { tradable: true } as any), 'symbol')
             this.startDataFetching()
           }
         })
@@ -107,7 +108,8 @@ export default class Historian {
   }
 
   private fetchBars(timeframe: string, limit: number) {
-    const symbolChunks: string[][] = _.chunk(this.symbols, ALPACA_SYMBOL_LIMIT)
+    logger.log('info', `Starting ${timeframe} Bar Fetch`)
+    const symbolChunks: string[][] = _.chunk(this.assets, ALPACA_SYMBOL_LIMIT)
     async.eachLimit(symbolChunks, ASYNC_LIMIT, (chunk: string[], eachCallback: async.ErrorCallback) => {
       async.auto({
         getBars: (autoCallback: async.ErrorCallback) => {
@@ -154,7 +156,7 @@ export default class Historian {
   }
 
   private getRawSentimentData() {
-    async.eachLimit(this.symbols, ASYNC_LIMIT, (symbol: string, eachCallback: async.ErrorCallback) => {
+    async.eachLimit(this.assets, ASYNC_LIMIT, (symbol: string, eachCallback: async.ErrorCallback) => {
       logger.log('info', `Getting raw news sentiment for ${symbol}`)
       this.alpaca.getNews(symbol, (err: any, news: INews[]) => {
         if (err) {
