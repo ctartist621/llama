@@ -217,7 +217,19 @@ export default class Quant {
           Leading Indicator
           Measures recent trading strength, velocity of change in the trend, and magnitude of the move.
         */
-        autoCallback()
+        // https://www.investopedia.com/terms/r/rsi.asp#what-is-relative-strength-index--rsi
+        const options = [
+          14, // period
+        ]
+        tulind.indicators.rsi.indicator([
+          data.close,
+        ], options, (err, output) => {
+          if (err) {
+            autoCallback(err)
+          } else {
+            autoCallback(err, _.first(output))
+          }
+        });
       },
     }, cb)
   }
