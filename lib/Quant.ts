@@ -158,7 +158,7 @@ export default class Quant {
           if (err) {
             autoCallback(err)
           } else {
-            autoCallback(err, output)
+            autoCallback(err, _.first(output))
           }
         });
       },
@@ -197,7 +197,20 @@ export default class Quant {
           Leading Indicator
           An oscillator that helps identify price reversals, price extremes, and trend strength.
         */
-        autoCallback()
+        const options = [
+          5, // period
+        ]
+        tulind.indicators.cci.indicator([
+          data.high,
+          data.low,
+          data.close,
+        ], options, (err, output) => {
+          if (err) {
+            autoCallback(err)
+          } else {
+            autoCallback(err, _.first(output))
+          }
+        });
       },
       RSI: (autoCallback) => {
         /* Relative Strength Index (RSI)
