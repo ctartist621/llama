@@ -92,7 +92,7 @@ export default class Quant {
         volatility: ['data', (results:any, autoCallback) => { this.volatility(results.data, autoCallback) }],
         volume: ['data', (results:any, autoCallback) => { this.volume(results.data, autoCallback) }],
       }, (err: any, results: any) => {
-					console.log(results.volatility)
+          console.log(results.volatility)
           eachCallback(err)
         })
       }, (err) => {
@@ -260,55 +260,72 @@ export default class Quant {
     }, cb)
   }
 
-	volatility(data: any, cb: any) {
-		async.auto({
-			bbands: (autoCallback) => {
+  volatility(data: any, cb: any) {
+    async.auto({
+      bbands: (autoCallback) => {
         /* Bollinger bands
           Lagging Indicator
           Measures the “highness” or “lowness” of price, relative to previous trades.
         */
-				// https://www.investopedia.com/terms/b/bollingerbands.asp
-				const options = [
-					20, // period
-					2, // stddev
-				]
-				tulind.indicators.bbands.indicator([
-					data.close,
-				], options, (err, output) => {
-					if (err) {
-						autoCallback(err)
-					} else {
-						autoCallback(err, {
-							lower: output[0],
-							middle: output[1],
-							upper: output[2],
-						})
-					}
-				});
-			},
-			atr: (autoCallback) => {
+        // https://www.investopedia.com/terms/b/bollingerbands.asp
+        const options = [
+          20, // period
+          2, // stddev
+        ]
+        tulind.indicators.bbands.indicator([
+          data.close,
+        ], options, (err, output) => {
+          if (err) {
+            autoCallback(err)
+          } else {
+            autoCallback(err, {
+              lower: output[0],
+              middle: output[1],
+              upper: output[2],
+            })
+          }
+        });
+      },
+      atr: (autoCallback) => {
         /* Average True Range
           Lagging Indicator
           Shows the degree of price volatility.
         */
-				// https://www.investopedia.com/terms/a/atr.asp
-				const options = [
-					5, // period
-				]
-				tulind.indicators.atr.indicator([
-					data.high,
-					data.low,
-					data.close,
-				], options, (err, output) => {
-					if (err) {
-						autoCallback(err)
-					} else {
-						autoCallback(err, output)
-					}
-				});
-			},
-		}, cb)
-	}
+        // https://www.investopedia.com/terms/a/atr.asp
+        const options = [
+          5, // period
+        ]
+        tulind.indicators.atr.indicator([
+          data.high,
+          data.low,
+          data.close,
+        ], options, (err, output) => {
+          if (err) {
+            autoCallback(err)
+          } else {
+            autoCallback(err, output)
+          }
+        });
+      },
+      stddev: (autoCallback) => {
+        /* Standard Deviation
+          Lagging Indicator
+          Used to measure expected risk and to determine the significance of certain price movements.
+        */
+        // https://www.investopedia.com/terms/s/standarddeviation.asp
+
+        const periods = [5, 30, 50, 200]
+
+        async.map(periods, (period, mapCallback) => {
+          tulind.indicators.stddev.indicator([data.close], [period], (err, output) => {
+            let o = {}
+            o[period] = _.first(output)
+            mapCallback(err, o)
+          });
+        }, autoCallback)
+      }
+    }, cb)
+  }
 
   volume(data: any, cb: any) { cb() }
 }
