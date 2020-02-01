@@ -92,7 +92,7 @@ export default class Quant {
         volatility: ['data', (results:any, autoCallback) => { this.volatility(results.data, autoCallback) }],
         volume: ['data', (results:any, autoCallback) => { this.volume(results.data, autoCallback) }],
       }, (err: any, results: any) => {
-          console.log(results.trend)
+					console.log(results.volatility)
           eachCallback(err)
         })
       }, (err) => {
@@ -105,6 +105,24 @@ export default class Quant {
 
   trend(data: any, cb: any) {
     async.auto({
+      EMA: (autoCallback) => {
+        /* Exponential Moving Average
+          Lagging Indicator
+          Used to identify trends and reversals, as well as to set up support
+          and resistance levels.
+        */
+        // https://www.investopedia.com/terms/e/ema.asp
+
+        const periods = [12, 26]
+
+        async.map(periods, (period, mapCallback) => {
+          tulind.indicators.ema.indicator([data.close], [period], (err, output) => {
+            let o = {}
+            o[period] = _.first(output)
+            mapCallback(err, o)
+          });
+        }, autoCallback)
+      },
       SMA: (autoCallback) => {
         /* Simple Moving Average
           Lagging Indicator
@@ -113,16 +131,14 @@ export default class Quant {
         */
         // https://www.investopedia.com/terms/s/sma.asp
 
-        const periods = [5,30, 50,200]
+        const periods = [5, 30, 50, 200]
 
         async.map(periods, (period, mapCallback) => {
-
           tulind.indicators.sma.indicator([data.close], [period], (err, output) => {
             let o = {}
-            o[period] = output
+            o[period] = _.first(output)
             mapCallback(err, o)
           });
-
         }, autoCallback)
       },
       MACD: (autoCallback) => {
@@ -244,7 +260,34 @@ export default class Quant {
     }, cb)
   }
 
-  volatility(data: any, cb: any) { cb() }
+	volatility(data: any, cb: any) {
+		async.auto({
+			bbands: (autoCallback) => {
+        /* Bollinger bands
+          Lagging Indicator
+          Measures the “highness” or “lowness” of price, relative to previous trades.
+        */
+        // https://www.investopedia.com/terms/b/bollingerbands.asp
+				const options = [
+					20, // period
+					2, // stddev
+				]
+				tulind.indicators.bbands.indicator([
+					data.close,
+				], options, (err, output) => {
+					if (err) {
+						autoCallback(err)
+					} else {
+						autoCallback(err, {
+							lower: output[0],
+							middle: output[1],
+							upper: output[2],
+						})
+					}
+				});
+			},
+		}, cb)
+	}
 
   volume(data: any, cb: any) { cb() }
 }
