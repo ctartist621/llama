@@ -368,6 +368,22 @@ export default class Quant {
           }
         });
       },
+      vroc: (autoCallback) => {
+        /* Volume Rate of Change
+           Lagging Indicator
+           Highlights increases in volume. These normally happen mostly at market tops, bottoms, or breakouts.
+        */
+        // https://www.investopedia.com/articles/technical/02/091002.asp
+        const periods = [14, 30]
+
+        async.map(periods, (period, mapCallback) => {
+          tulind.indicators.stddev.indicator([data.close], [period], (err, output) => {
+            let o = {}
+            o[period] = _.first(output)
+            mapCallback(err, o)
+          });
+        }, autoCallback)
+      }
     }, cb)
   }
 }
