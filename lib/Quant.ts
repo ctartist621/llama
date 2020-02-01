@@ -267,7 +267,7 @@ export default class Quant {
           Lagging Indicator
           Measures the “highness” or “lowness” of price, relative to previous trades.
         */
-        // https://www.investopedia.com/terms/b/bollingerbands.asp
+				// https://www.investopedia.com/terms/b/bollingerbands.asp
 				const options = [
 					20, // period
 					2, // stddev
@@ -283,6 +283,27 @@ export default class Quant {
 							middle: output[1],
 							upper: output[2],
 						})
+					}
+				});
+			},
+			atr: (autoCallback) => {
+        /* Average True Range
+          Lagging Indicator
+          Shows the degree of price volatility.
+        */
+				// https://www.investopedia.com/terms/a/atr.asp
+				const options = [
+					5, // period
+				]
+				tulind.indicators.atr.indicator([
+					data.high,
+					data.low,
+					data.close,
+				], options, (err, output) => {
+					if (err) {
+						autoCallback(err)
+					} else {
+						autoCallback(err, output)
 					}
 				});
 			},
