@@ -92,7 +92,7 @@ export default class Quant {
         volatility: ['data', (results:any, autoCallback) => { this.volatility(results.data, autoCallback) }],
         volume: ['data', (results:any, autoCallback) => { this.volume(results.data, autoCallback) }],
       }, (err: any, results: any) => {
-          console.log(results.volatility)
+          console.log(results.volume)
           eachCallback(err)
         })
       }, (err) => {
@@ -327,5 +327,47 @@ export default class Quant {
     }, cb)
   }
 
-  volume(data: any, cb: any) { cb() }
+  volume(data: any, cb: any) {
+    async.auto({
+      bbands: (autoCallback) => {
+        /* Chaikin Oscillator
+          Leading Indicator
+          Monitors the flow of money in and out of the market, which can help determine tops and bottoms.
+        */
+        // https://www.investopedia.com/terms/c/chaikinoscillator.asp
+        const options = [
+          10, // period
+        ]
+        tulind.indicators.cvi.indicator([
+          data.high,
+          data.low,
+        ], options, (err, output) => {
+          if (err) {
+            autoCallback(err)
+          } else {
+            autoCallback(err, output)
+          }
+        });
+      },
+      obv: (autoCallback) => {
+        /* On-Balance Volume (OBV)
+           Leading Indicator
+           Attempts to measure level of accumulation or distribution, by comparing volume to price.
+        */
+        // https://www.investopedia.com/terms/o/onbalancevolume.asp
+        const options = [
+        ]
+        tulind.indicators.obv.indicator([
+          data.close,
+          data.volume,
+        ], options, (err, output) => {
+          if (err) {
+            autoCallback(err)
+          } else {
+            autoCallback(err, output)
+          }
+        });
+      },
+    }, cb)
+  }
 }
