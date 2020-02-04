@@ -103,6 +103,29 @@ export default class Quant {
       })
   }
 
+  static generateConfigTemplate(path: string, cb) {
+    async.transform(tulind.indicators, (obj: any, indicator: any, name: string, transformCallback: any) => {
+      let options = {
+        configured: false
+      }
+      if(indicator.options == 0) {
+        options.configured = true
+      } else {
+        _.each(indicator.option_names, (n) => {
+          options[n] = null
+        })
+      }
+      obj[name] = options
+      transformCallback()
+    }, (err, ret) => {
+      if(err) {
+        cb(err)
+      } else {
+        fs.writeFile(path, JSON.stringify(ret, null, 2), cb)
+      }
+    })
+  }
+
   trend(data: any, cb: any) {
     async.auto({
       EMA: (autoCallback) => {

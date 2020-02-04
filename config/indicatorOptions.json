@@ -1,0 +1,393 @@
+{
+  "abs": {
+    "configured": true
+  },
+  "acos": {
+    "configured": true
+  },
+  "ad": {
+    "configured": true
+  },
+  "add": {
+    "configured": true
+  },
+  "adosc": {
+    "configured": false,
+    "short period": null,
+    "long period": null
+  },
+  "adx": {
+    "configured": false,
+    "period": null
+  },
+  "adxr": {
+    "configured": false,
+    "period": null
+  },
+  "ao": {
+    "configured": true
+  },
+  "apo": {
+    "configured": false,
+    "short period": null,
+    "long period": null
+  },
+  "aroon": {
+    "configured": false,
+    "period": null
+  },
+  "aroonosc": {
+    "configured": false,
+    "period": null
+  },
+  "asin": {
+    "configured": true
+  },
+  "atan": {
+    "configured": true
+  },
+  "atr": {
+    "configured": false,
+    "period": null
+  },
+  "avgprice": {
+    "configured": true
+  },
+  "bbands": {
+    "configured": false,
+    "period": null,
+    "stddev": null
+  },
+  "bop": {
+    "configured": true
+  },
+  "cci": {
+    "configured": false,
+    "period": null
+  },
+  "ceil": {
+    "configured": true
+  },
+  "cmo": {
+    "configured": false,
+    "period": null
+  },
+  "cos": {
+    "configured": true
+  },
+  "cosh": {
+    "configured": true
+  },
+  "crossany": {
+    "configured": true
+  },
+  "crossover": {
+    "configured": true
+  },
+  "cvi": {
+    "configured": false,
+    "period": null
+  },
+  "decay": {
+    "configured": false,
+    "period": null
+  },
+  "dema": {
+    "configured": false,
+    "period": null
+  },
+  "di": {
+    "configured": false,
+    "period": null
+  },
+  "div": {
+    "configured": true
+  },
+  "dm": {
+    "configured": false,
+    "period": null
+  },
+  "dpo": {
+    "configured": false,
+    "period": null
+  },
+  "dx": {
+    "configured": false,
+    "period": null
+  },
+  "edecay": {
+    "configured": false,
+    "period": null
+  },
+  "ema": {
+    "configured": false,
+    "period": null
+  },
+  "emv": {
+    "configured": true
+  },
+  "exp": {
+    "configured": true
+  },
+  "fisher": {
+    "configured": false,
+    "period": null
+  },
+  "floor": {
+    "configured": true
+  },
+  "fosc": {
+    "configured": false,
+    "period": null
+  },
+  "hma": {
+    "configured": false,
+    "period": null
+  },
+  "kama": {
+    "configured": false,
+    "period": null
+  },
+  "kvo": {
+    "configured": false,
+    "short period": null,
+    "long period": null
+  },
+  "lag": {
+    "configured": false,
+    "period": null
+  },
+  "linreg": {
+    "configured": false,
+    "period": null
+  },
+  "linregintercept": {
+    "configured": false,
+    "period": null
+  },
+  "linregslope": {
+    "configured": false,
+    "period": null
+  },
+  "ln": {
+    "configured": true
+  },
+  "log10": {
+    "configured": true
+  },
+  "macd": {
+    "configured": false,
+    "short period": null,
+    "long period": null,
+    "signal period": null
+  },
+  "marketfi": {
+    "configured": true
+  },
+  "mass": {
+    "configured": false,
+    "period": null
+  },
+  "max": {
+    "configured": false,
+    "period": null
+  },
+  "md": {
+    "configured": false,
+    "period": null
+  },
+  "medprice": {
+    "configured": true
+  },
+  "mfi": {
+    "configured": false,
+    "period": null
+  },
+  "min": {
+    "configured": false,
+    "period": null
+  },
+  "mom": {
+    "configured": false,
+    "period": null
+  },
+  "msw": {
+    "configured": false,
+    "period": null
+  },
+  "mul": {
+    "configured": true
+  },
+  "natr": {
+    "configured": false,
+    "period": null
+  },
+  "nvi": {
+    "configured": true
+  },
+  "obv": {
+    "configured": true
+  },
+  "ppo": {
+    "configured": false,
+    "short period": null,
+    "long period": null
+  },
+  "psar": {
+    "configured": false,
+    "acceleration factor step": null,
+    "acceleration factor maximum": null
+  },
+  "pvi": {
+    "configured": true
+  },
+  "qstick": {
+    "configured": false,
+    "period": null
+  },
+  "roc": {
+    "configured": false,
+    "period": null
+  },
+  "rocr": {
+    "configured": false,
+    "period": null
+  },
+  "round": {
+    "configured": true
+  },
+  "rsi": {
+    "configured": false,
+    "period": null
+  },
+  "sin": {
+    "configured": true
+  },
+  "sinh": {
+    "configured": true
+  },
+  "sma": {
+    "configured": false,
+    "period": null
+  },
+  "sqrt": {
+    "configured": true
+  },
+  "stddev": {
+    "configured": false,
+    "period": null
+  },
+  "stderr": {
+    "configured": false,
+    "period": null
+  },
+  "stoch": {
+    "configured": false,
+    "%k period": null,
+    "%k slowing period": null,
+    "%d period": null
+  },
+  "stochrsi": {
+    "configured": false,
+    "period": null
+  },
+  "sub": {
+    "configured": true
+  },
+  "sum": {
+    "configured": false,
+    "period": null
+  },
+  "tan": {
+    "configured": true
+  },
+  "tanh": {
+    "configured": true
+  },
+  "tema": {
+    "configured": false,
+    "period": null
+  },
+  "todeg": {
+    "configured": true
+  },
+  "torad": {
+    "configured": true
+  },
+  "tr": {
+    "configured": true
+  },
+  "trima": {
+    "configured": false,
+    "period": null
+  },
+  "trix": {
+    "configured": false,
+    "period": null
+  },
+  "trunc": {
+    "configured": true
+  },
+  "tsf": {
+    "configured": false,
+    "period": null
+  },
+  "typprice": {
+    "configured": true
+  },
+  "ultosc": {
+    "configured": false,
+    "short period": null,
+    "medium period": null,
+    "long period": null
+  },
+  "var": {
+    "configured": false,
+    "period": null
+  },
+  "vhf": {
+    "configured": false,
+    "period": null
+  },
+  "vidya": {
+    "configured": false,
+    "short period": null,
+    "long period": null,
+    "alpha": null
+  },
+  "volatility": {
+    "configured": false,
+    "period": null
+  },
+  "vosc": {
+    "configured": false,
+    "short period": null,
+    "long period": null
+  },
+  "vwma": {
+    "configured": false,
+    "period": null
+  },
+  "wad": {
+    "configured": true
+  },
+  "wcprice": {
+    "configured": true
+  },
+  "wilders": {
+    "configured": false,
+    "period": null
+  },
+  "willr": {
+    "configured": false,
+    "period": null
+  },
+  "wma": {
+    "configured": false,
+    "period": null
+  },
+  "zlema": {
+    "configured": false,
+    "period": null
+  }
+}

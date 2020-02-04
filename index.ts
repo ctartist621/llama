@@ -20,20 +20,34 @@ console.log("Starting Llama")
 
 program
   .option('-f, --function <function>', 'Function to perform (Historian, Quant, Broker')
+  .option('-c, --quantConfig', 'Generate Quant Config. WARNING: This will overwrite an existing config file')
   .parse(process.argv);
 
-switch (program.function) {
-  case "historian":
-    logger.log('info', "Starting Historian")
-    const historian = new Historian(alpaca, influx, redis)
-    break;
+if(program.function) {
+  switch (program.function) {
+    case "historian":
+      logger.log('info', "Starting Historian")
+      const historian = new Historian(alpaca, influx, redis)
+      break;
 
-  case "quant":
-    logger.log('info', "Starting Quant")
-    const quant = new Quant(alpaca, influx, redis)
-    break;
+    case "quant":
+      logger.log('info', "Starting Quant")
+      const quant = new Quant(alpaca, influx, redis)
+      break;
 
-  default:
-    logger.log('error', "That Function is not supported.")
-    break;
+    default:
+      logger.log('error', "That Function is not supported.")
+      break;
+  }
+} else if (program.quantConfig) {
+  const path = './config/indicatorOptions.json'
+  Quant.generateConfigTemplate(path, (err, ret) => {
+    if(err) {
+      logger.log('error', err)
+      process.exit(1)
+    } else {
+      logger.log('info', `Options json write to ${path}`)
+      process.exit()
+    }
+  })
 }
