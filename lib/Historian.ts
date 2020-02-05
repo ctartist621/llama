@@ -1,4 +1,4 @@
-/// <reference path="../typings/index.d.ts"/>
+/// <reference path='../typings/index.d.ts'/>
 
 import _ from 'lodash'
 import async from 'async'
@@ -18,8 +18,8 @@ const ALPACA_SYMBOL_LIMIT = 200
 const INFLUX_WRITE_LIMIT = 5000 //5000-10000
 const ALPACA_BAR_LIMIT = INFLUX_WRITE_LIMIT / ALPACA_SYMBOL_LIMIT
 
-import Logger from "./Logger"
-const logger = new Logger("Historian")
+import Logger from './Logger'
+const logger = new Logger('Historian')
 const CronJob = require('cron').CronJob;
 
 const MARKET_TIMEZONE = 'America/New_York'
@@ -48,21 +48,21 @@ export default class Historian {
   }
 
   private fetchAssets() {
-    logger.log('info', "Fetch Assets Starting")
+    logger.log('info', 'Fetch Assets Starting')
     this.alpaca.getAllAssets((err: any, assets: IAsset[]) => {
       if (err) {
         logger.log('error', err)
       } else {
         async.each(assets, (asset: IAsset, eachCallback: async.ErrorCallback) => {
-          console.log(asset)
           this.redis.storeAsset(asset, eachCallback)
         },(err) => {
           if(err) {
             logger.log('error', err)
           } else {
             logger.log('info', `${assets.length} Assets Stored`)
-            this.assets = _.map(assets, 'symbol')
-            // this.assets = _.map(_.filter(assets, { tradable: true } as any), 'symbol')
+            // this.assets = _.map(assets, 'symbol')
+            this.assets = _.map(_.filter(assets, { tradable: true } as any), 'symbol')
+            logger.log('info', `Processing ${this.assets.length} Tradable Assets`)
             this.startDataFetching()
           }
         })
@@ -71,42 +71,152 @@ export default class Historian {
   }
 
   private startDataFetching() {
-    logger.log('info', "Starting News Fetching")
-    this.cronJobs.fetchBars1D = new CronJob('0 * * * *', () => {
+    this.cronJobs.fetchNews = new CronJob('0 22 * * * ', () => {
       this.getRawSentimentData()
     }, null, true, MARKET_TIMEZONE);
-    this.cronJobs.fetchBars1D.start();
-    logger.log('info', "Started News Fetching Cron")
 
-    logger.log('info', "Starting Bar Fetching")
-    this.cronJobs.fetchBars1D = new CronJob('0 23 * * *', () => {
+    this.cronJobs.fetchBars1D = new CronJob('0 21 * * MON-FRI', () => {
       this.fetchBars('1D', ALPACA_BAR_LIMIT)
     }, null, true, MARKET_TIMEZONE);
-    this.cronJobs.fetchBars1D.start();
-    logger.log('info', "Started 1D Bar Cron")
 
-    this.cronJobs.fetchBars15Min = new CronJob('0 0 * * *', () => {
+    this.cronJobs.fetchBars15Min = new CronJob('0 20 * * MON-FRI', () => {
       this.fetchBars('15Min', ALPACA_BAR_LIMIT)
     }, null, true, MARKET_TIMEZONE);
-    this.cronJobs.fetchBars15Min.start();
-    logger.log('info', "Started 15Min Bar Cron")
 
-    this.cronJobs.fetchBars5Min = new CronJob('*/15 * * * *', () => {
+    this.cronJobs.fetchBars5Min = new CronJob('*/15 7-19 * * MON-FRI', () => {
       this.fetchBars('5Min', ALPACA_BAR_LIMIT)
     }, null, true, MARKET_TIMEZONE);
-    this.cronJobs.fetchBars5Min.start();
-    logger.log('info', "Started 5Min Bar Cron")
 
-    this.cronJobs.fetchBars1Min = new CronJob('*/5 * * * *', () => {
+    this.cronJobs.fetchBars1Min = new CronJob('*/5 7-19 * * MON-FRI', () => {
       this.fetchBars('1Min', ALPACA_BAR_LIMIT)
     }, null, true, MARKET_TIMEZONE);
-    this.cronJobs.fetchBars1Min.start();
-    logger.log('info', "Started 1Min Bar Cron")
 
-    this.fetchBars('1D', ALPACA_BAR_LIMIT)
-    this.getRawSentimentData()
+    this.cronJobs.backfillBars1D = new CronJob('0 23 * * FRI', () => {
+      this.backfillBars('1D', ALPACA_BAR_LIMIT)
+    }, null, true, MARKET_TIMEZONE);
+
+    this.startCronJobs()
+
+    // this.backfillBars('1D', ALPACA_BAR_LIMIT)
   }
 
+  private stopCronJobs() {
+    this.cronJobs.fetchNews.stop();
+    logger.log('info', 'Stopped News Fetching Cron')
+
+    this.cronJobs.fetchBars1D.stop();
+    logger.log('info', 'Stopped 1D Bar Cron')
+
+    this.cronJobs.fetchBars15Min.stop();
+    logger.log('info', 'Stopped 15Min Bar Cron')
+
+    this.cronJobs.fetchBars5Min.stop();
+    logger.log('info', 'Stopped 5Min Bar Cron')
+
+    this.cronJobs.fetchBars1Min.stop();
+    logger.log('info', 'Stopped 1Min Bar Cron')
+
+    this.cronJobs.backfillBars1D.stop();
+    logger.log('info', 'Stopped 1D Bar Backfill Cron')
+
+  }
+
+  private startCronJobs() {
+    logger.log('info', 'Starting News Fetching Cron')
+    this.cronJobs.fetchNews.start();
+    logger.log('info', 'Started News Fetching Cron')
+
+    logger.log('info', 'Starting Bar Fetching')
+    this.cronJobs.fetchBars1D.start();
+    logger.log('info', 'Started 1D Bar Cron')
+
+    this.cronJobs.fetchBars15Min.start();
+    logger.log('info', 'Started 15Min Bar Cron')
+
+    this.cronJobs.fetchBars5Min.start();
+    logger.log('info', 'Started 5Min Bar Cron')
+
+    this.cronJobs.fetchBars1Min.start();
+    logger.log('info', 'Started 1Min Bar Cron')
+
+    this.cronJobs.backfillBars1D.start();
+    logger.log('info', 'Started 1D Bar Backfill Cron')
+  }
+
+  private backfillBars(timeframe: string, ALPACA_BAR_LIMIT) {
+    this.stopCronJobs()
+    let overallStartingBarTime: string
+    logger.log('info', `Starting ${timeframe} Backfill`)
+    const symbolChunks: string[][] = _.chunk(_.shuffle(this.assets), ALPACA_SYMBOL_LIMIT)
+
+    let timePointer = moment()
+    let stopTime = moment().subtract(10, 'years')
+    let endTimes: string[] = []
+
+    const tf= {
+      '1D': { constant: 1, unit: 'days' },
+      '15Min': { constant: 15, unit: 'minutes' },
+      '5Min': { constant: 5, unit: 'minutes' },
+      '1Min': { constant: 1, unit: 'minutes' },
+    }
+
+    while (timePointer.isSameOrAfter(stopTime)) {
+      endTimes.push(timePointer.format())
+      timePointer.subtract(ALPACA_BAR_LIMIT * tf[timeframe].constant, tf[timeframe].unit)
+    }
+
+    async.eachSeries(symbolChunks, (chunk: string[], eachChunkCallback: async.ErrorCallback) => {
+      async.eachSeries(endTimes, (end: string, eachTimeCallback: async.ErrorCallback) => {
+        async.auto({
+          getBars: (autoCallback: async.ErrorCallback) => {
+            logger.log('debug', `${timeframe} for ${chunk.length} symbols`)
+            this.alpaca.getBars(timeframe, chunk, { end }, autoCallback)
+          },
+          storeBars: ['getBars', (results: any, autoCallback: async.ErrorCallback) => {
+            const bars = _.flatten(_.map(results.getBars, (bars: IBar[], symbol: string) => {
+              return _.map(bars, (b: IAssetBar) => {
+                b.symbol = symbol
+                b.timeframe = timeframe
+                return b
+              })
+            }))
+            const lines: any[] = _.map(bars, (bar: IAssetBar) => {
+              return this.influx.getLine(bar.symbol, {
+                timeframe: bar.timeframe
+              }, {
+                open: bar.o,
+                high: bar.h,
+                low: bar.o,
+                close: bar.c,
+                volume: bar.v
+              }, bar.t)
+            })
+
+            if (lines.length > 0) {
+              this.influx.batchWrite('marketData', lines, (err, ret) => {
+                if (err) {
+                  logger.log('error', err)
+                } else {
+                  logger.log('info', `${timeframe} Bar Backfill complete for ${_.first(chunk)} group from ${end}`)
+                }
+                autoCallback(err)
+              })
+            } else {
+              logger.log('warn', `No data to write, skipping Influx load.`)
+              autoCallback()
+            }
+          }]
+        }, ASYNC_LIMIT, eachTimeCallback)
+      }, eachChunkCallback)
+    }, (err: any) => {
+      if (err) {
+        logger.log('error', err)
+      } else {
+        logger.log('info', `${timeframe} Bar Backfill complete from ${overallStartingBarTime}`)
+        this.startCronJobs()
+      }
+    })
+  }
   private fetchBars(timeframe: string, limit: number) {
     logger.log('info', `Starting ${timeframe} Bar Fetch`)
     const symbolChunks: string[][] = _.chunk(this.assets, ALPACA_SYMBOL_LIMIT)
@@ -138,7 +248,7 @@ export default class Historian {
             }, bar.t)
           })
 
-          if(lines.length > 0) {
+          if (lines.length > 0) {
             this.influx.batchWrite('marketData', lines, autoCallback)
           } else {
             logger.log('warn', `No data to write, skipping Influx load.`)

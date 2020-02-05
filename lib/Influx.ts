@@ -64,6 +64,44 @@ export default class Influx {
     })
   }
 
+  oldestBarTime(asset: string, timeframe: string, range: string, cb: any) {
+    let o = this.options
+    o.headers.Accept = "application/csv"
+    o.headers["Content-type"] = "application/vnd.flux"
+
+    const query = `from(bucket: "marketData")
+      |> range(start: ${range})
+      |> filter(fn: (r) => r._field == "close")
+      |> filter(fn: (r) => r._measurement == "${asset}")
+      |> filter(fn: (r) => r.timeframe == "${timeframe}")
+      |> first()`
+
+    needle.post(`${this.endpoints.query}`, query, o, function(err: any, resp: any, body: any) {
+      if (err || body.code) {
+        logger.log('error', JSON.stringify(err || body))
+        cb(err || body)
+      } else {
+        // logger.log('silly', `Query successful`)
+        const s = _.split(_.trim(body, '\r\n'), '\r\n\r\n')
+        async.map(s, (table: string, mapCallback) => {
+          parse(table, { columns: true }, (err, j) => {
+            if (err) {
+              mapCallback(err)
+            } else {
+              mapCallback(err, _.first(_.flattenDeep(_.map(j, '_time'))))
+            }
+          })
+        }, (err, ret) => {
+          if (err) {
+            cb(err)
+          } else {
+            cb(err, _.first(ret))
+          }
+        })
+      }
+    })
+  }
+
   queryMarketData(asset: string, field: string, timeframe: string, start: string, stop: string, columnArray=true, cb: Function) {
     let o = this.options
     o.headers.Accept = "application/csv"
