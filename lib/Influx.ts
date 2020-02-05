@@ -102,21 +102,15 @@ export default class Influx {
     })
   }
 
-  queryMarketData(asset: string, field: string, timeframe: string, start: string, stop: string, columnArray=true, cb: Function) {
+  queryMarketData(asset: string, timeframe: string, start: string, stop: string, columnArray=true, cb: Function) {
     let o = this.options
     o.headers.Accept = "application/csv"
     o.headers["Content-type"] = "application/vnd.flux"
 
-    // const query = `from(bucket: "marketData")
-    //   |> range(start: -100d)
-    //   |> filter(fn: (r) => r.field == "${field}")
-    //   |> filter(fn: (r) => r._measurement == "${asset}")
-    //   |> filter(fn: (r) => r.timeframe == "${timeframe}")`
-
     const query = `from(bucket: "marketData")
       |> range(start: -100d)
-      |> filter(fn: (r) => r._measurement == "AAWW")
-      |> filter(fn: (r) => r.timeframe == "1D")`
+      |> filter(fn: (r) => r._measurement == "${asset}")
+      |> filter(fn: (r) => r.timeframe == "${timeframe}")`
 
     needle.post(`${this.endpoints.query}`, query, o, function(err: any, resp: any, body: any) {
       if (err || body.code) {
@@ -131,15 +125,20 @@ export default class Influx {
               mapCallback(err)
             } else {
               let ret: any = {}
-              ret[(_.first(j) as any)._field] = _.map(j, '_value')
-              ret.time = _.map(j, '_time')
-              mapCallback(err, ret)
+              if(_.isEmpty(j)) {
+                mapCallback(err)
+              } else {
+                ret[(_.first(j) as any)._field] = _.map(j, '_value')
+                ret.time = _.map(j, '_time')
+                mapCallback(err, ret)
+              }
             }
           })
         }, (err, tables) => {
           if(err) {
             cb(err)
           } else {
+            tables = _.compact(tables)
             cb(err, _.reduce(tables, (r: any, t: any) => {
               r.low = t.low ? t.low : r.low
               r.high = t.high ? t.high : r.high

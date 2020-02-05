@@ -46,38 +46,37 @@ export default class Quant {
       process.exit(1)
     }
 
-    // this.redis.getAssetList((err: any, assets: string[]) => {
-    //   if(err) {
-    //     logger.error(err)
-    //   } else {
-    //     this.assets = assets
-    //     this.startAnalysis()
-    //   }
-    // })
-    this.runAnalysis('1D', ['AAPL'])
+    this.redis.getAssetList((err: any, assets: string[]) => {
+      if(err) {
+        logger.error(err)
+      } else {
+        this.assets = assets
+        this.startAnalysis()
+      }
+    })
   }
 
   private startAnalysis() {
     logger.log('info', "Starting Analysis Crons")
-    this.cronJobs.analysis1D = new CronJob('0 23 * * *', () => {
+    this.cronJobs.analysis1D = new CronJob('0 22 * * *', () => {
       this.runAnalysis('1D')
     }, null, true, MARKET_TIMEZONE);
     this.cronJobs.analysis1D.start();
     logger.log('info', "Started 1D Analysis Cron")
 
-    // this.cronJobs.analysis15Min = new CronJob('0 0 * * *', () => {
+    // this.cronJobs.analysis15Min = new CronJob('0 21 * * MON-FRI', () => {
     //   this.runAnalysis('15Min')
     // }, null, true, MARKET_TIMEZONE);
     // this.cronJobs.analysis15Min.start();
     // logger.log('info', "Started 15Min Analysis Cron")
 
-    // this.cronJobs.analysis5Min = new CronJob('*/15 * * * *', () => {
+    // this.cronJobs.analysis5Min = new CronJob('*/7 7-19 * * MON-FRI', () => {
     //   this.runAnalysis('5Min')
     // }, null, true, MARKET_TIMEZONE);
     // this.cronJobs.analysis5Min.start();
     // logger.log('info', "Started 5Min Analysis Cron")
 
-    // this.cronJobs.analysis1Min = new CronJob('*/5 * * * *', () => {
+    // this.cronJobs.analysis1Min = new CronJob('*/3 7-19 * * MON-FRI', () => {
     //   this.runAnalysis('1Min')
     // }, null, true, MARKET_TIMEZONE);
     // this.cronJobs.analysis1Min.start();
@@ -90,22 +89,61 @@ export default class Quant {
 
     assets = assets ? assets : this.assets
     // https://www.visualcapitalist.com/12-types-technical-indicators-stocks/
-    async.eachLimit(assets, ASYNC_LIMIT, (asset, eachCallback) => {
+    async.eachLimit(assets, ASYNC_LIMIT, (asset, eachAssetCallback) => {
       logger.log('info', `Started ${timeframe} Analysis of ${asset}`)
       async.auto({
         data: (autoCallback) => {
-          this.influx.queryMarketData(asset, 'volume', timeframe, moment().subtract(1, 'year').format(), moment().format(), true, autoCallback)
+          this.influx.queryMarketData(asset, timeframe, moment().subtract(1, 'year').format(), moment().format(), true, autoCallback)
         },
-        indicators: ['data', (results: any, autoCallback) => { this.indicators(results.data, autoCallback) }],
+        indicators: ['data', (results: any, autoCallback) => {
+          if (_.isEmpty(results.data)) {
+            logger.log('warn', `No Data for ${asset}`)
+            autoCallback()
+          } else {
+            this.indicators(results.data, autoCallback)
+          }
+        }],
+        storeIndicators: ['indicators', (results: any, autoCallback) => {
+          let lines: any[] = []
+          async.forEachOfLimit(results.indicators, ASYNC_LIMIT, (indicatorData: any, indicatorName: any, eachIndicatorCallback: any) => {
+            for (var i = _.keys(indicatorData).length - 1; i >= 0; i--) {
+              for (var j = results.data.time.length - 1; j >= 0; j--) {
+                if (_.isFinite(indicatorData[_.keys(indicatorData)[i]][j])) {
+                  lines.push(this.influx.getLine(asset, {
+                    indicator: indicatorName,
+                    output: _.keys(indicatorData)[i],
+                    timeframe,
+                  }, {
+                    indicator: indicatorData[_.keys(indicatorData)[i]][j],
+                  }, moment(results.data.time[j]).unix()))
+                }
+              }
+            }
+            if (lines.length > 0) {
+              this.influx.batchWrite('indicators', lines, (err, ret) => {
+                if (err) {
+                  logger.log('error', err)
+                } else {
+                  logger.log('debug', `Indicators stored for ${asset}`)
+                }
+                eachIndicatorCallback(err)
+              })
+            } else {
+              logger.log('debug', `No data to write, skipping Influx load.`)
+              eachIndicatorCallback()
+            }
+          }, autoCallback)
+        }],
       }, (err: any, results: any) => {
-        console.log(results)
-        eachCallback(err)
+          logger.log('info', `${timeframe} Analysis for ${asset} Complete`)
+          eachAssetCallback(err)
       })
     }, (err) => {
       if (err) {
         logger.error(err)
+      } else {
+        logger.log('info', `${timeframe} Analysis Complete`)
       }
-      process.exit()
     })
   }
 
@@ -119,7 +157,6 @@ export default class Quant {
         const options = _.map(opts.indicator.option_names, (i: string) => {
           return opts[i]
         })
-
         tulind.indicators[opts.indicator.name].indicator(inputs, options, (err: any, outputs: any[]) => {
           if (err) {
             eachCallback(err)
@@ -133,7 +170,7 @@ export default class Quant {
           }
         })
       } else {
-        logger.log('info', `Skipping ${opts.indicator.full_name}, not configured.`)
+        logger.log('debug', `Skipping ${opts.indicator.full_name}, not configured.`)
         eachCallback()
       }
     }, (err: any) => {

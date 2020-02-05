@@ -1,10 +1,11 @@
+import moment from "moment"
 import winston from "winston"
 
 export default class Logger {
   logger: winston.Logger
   context: string|undefined
   constructor(context?: string) {
-    this.context = context ? `[${context}] ` : ""
+    this.context = context ? `[${context}]: ` : ""
     this.logger =  winston.createLogger({
       level: process.env.LOG_LEVEL || 'info',
       format: winston.format.json(),
@@ -29,7 +30,12 @@ export default class Logger {
   }
 
   private logString(l:string) {
-    return `${this.context}${l}`
+    if (process.env.NODE_ENV !== 'production') {
+      return `${this.context}: ${l}`
+    } else {
+      return `${moment().tz('America/Los_Angeles').format()} - ${this.context}${l}`
+
+    }
   }
 
   log(level, l) {
