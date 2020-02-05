@@ -39,4 +39,8 @@ export default class Redis {
     this.client.hgetall(`asset_${symbol}`, cb)
   }
 
+  getAssetList(cb: any) {
+    this.client.smembers('assets', cb)
+  }
+
 }
