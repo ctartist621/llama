@@ -20,11 +20,13 @@ const logger = new Logger("Quant")
 
 const MARKET_TIMEZONE = 'America/New_York'
 
+const OPTIONS_PATH = './config/indicatorOptions.json'
 
 export default class Quant {
   alpaca: any
   influx: Influx
   redis: Redis
+  indicatorOptions: any
 
   assets: string[]
   private cronJobs: any
@@ -36,6 +38,13 @@ export default class Quant {
     this.redis = r
     this.assets = []
     this.cronJobs = {}
+
+    if (fs.existsSync(OPTIONS_PATH)) {
+      this.indicatorOptions = JSON.parse(fs.readFileSync(OPTIONS_PATH).toString())
+    } else {
+      logger.error(`Quant could not be started.  Indicator Options does not exist.`)
+      process.exit(1)
+    }
 
     // this.redis.getAssetList((err: any, assets: string[]) => {
     //   if(err) {
@@ -87,12 +96,9 @@ export default class Quant {
         data: (autoCallback) => {
           this.influx.queryMarketData(asset, 'volume', timeframe, moment().subtract(1, 'year').format(), moment().format(), true, autoCallback)
         },
-        trend: ['data', (results:any, autoCallback) => { this.trend(results.data, autoCallback) }],
-        momentum: ['data', (results:any, autoCallback) => { this.momentum(results.data, autoCallback) }],
-        volatility: ['data', (results:any, autoCallback) => { this.volatility(results.data, autoCallback) }],
-        volume: ['data', (results:any, autoCallback) => { this.volume(results.data, autoCallback) }],
+        indicators: ['data', (results: any, autoCallback) => { this.indicators(results.data, autoCallback) }],
       }, (err: any, results: any) => {
-          console.log(results.volume)
+          console.log(results)
           eachCallback(err)
         })
       }, (err) => {
@@ -103,10 +109,47 @@ export default class Quant {
       })
   }
 
-  static generateConfigTemplate(path: string, cb) {
+  indicators(data: any, cb: any) {
+    let calculatedIndicators = {}
+    async.eachOf(this.indicatorOptions, (opts: any, indicatorName: any, eachCallback: any) => {
+      if(opts.configured) {
+        const inputs = _.map(opts.indicator.input_names, (i: string) => {
+          return data[i = 'real' ? 'close' : i]
+        })
+        const options = _.map(opts.indicator.option_names, (i: string) => {
+          return opts[i]
+        })
+
+        tulind.indicators[opts.indicator.name].indicator(inputs, options, (err: any, outputs: any[]) => {
+          if(err) {
+            eachCallback(err)
+          } else {
+            let calculatedIndicator = {}
+            for (var i = opts.indicator.output_names.length - 1; i >= 0; i--) {
+              calculatedIndicator[opts.indicator.output_names[i]] = outputs[i]
+            }
+            calculatedIndicators[indicatorName] = calculatedIndicator
+            eachCallback()
+          }
+        })
+      } else {
+        logger.log('info', `Skipping ${opts.indicator.full_name}, not configured.`)
+        eachCallback()
+      }
+    }, (err: any) => {
+      cb(err, calculatedIndicators)
+    })
+  }
+
+  static get optionsPath(): string {
+    return OPTIONS_PATH
+  }
+
+  static generateOptionsTemplate(cb) {
     async.transform(tulind.indicators, (obj: any, indicator: any, name: string, transformCallback: any) => {
       let options = {
-        configured: false
+        configured: false,
+        indicator
       }
       if(indicator.options == 0) {
         options.configured = true
@@ -121,7 +164,8 @@ export default class Quant {
       if(err) {
         cb(err)
       } else {
-        fs.writeFile(path, JSON.stringify(ret, null, 2), cb)
+        logger.log('info', `Options json write to ${this.optionsPath}`)
+        fs.writeFile(this.optionsPath, JSON.stringify(ret, null, 2), cb)
       }
     })
   }

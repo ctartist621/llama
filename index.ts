@@ -20,7 +20,7 @@ console.log("Starting Llama")
 
 program
   .option('-f, --function <function>', 'Function to perform (Historian, Quant, Broker')
-  .option('-c, --quantConfig', 'Generate Quant Config. WARNING: This will overwrite an existing config file')
+  .option('-c, --quantConfig', 'Generate Quant Options Template. WARNING: This will overwrite an existing config file')
   .parse(process.argv);
 
 if(program.function) {
@@ -40,13 +40,11 @@ if(program.function) {
       break;
   }
 } else if (program.quantConfig) {
-  const path = './config/indicatorOptions.json'
-  Quant.generateConfigTemplate(path, (err, ret) => {
+  Quant.generateOptionsTemplate((err, ret) => {
     if(err) {
       logger.log('error', err)
       process.exit(1)
     } else {
-      logger.log('info', `Options json write to ${path}`)
       process.exit()
     }
   })
