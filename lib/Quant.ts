@@ -98,21 +98,21 @@ export default class Quant {
         },
         indicators: ['data', (results: any, autoCallback) => { this.indicators(results.data, autoCallback) }],
       }, (err: any, results: any) => {
-          console.log(results)
-          eachCallback(err)
-        })
-      }, (err) => {
-        if(err) {
-          logger.error(err)
-        }
-        process.exit()
+        console.log(results)
+        eachCallback(err)
       })
+    }, (err) => {
+      if (err) {
+        logger.error(err)
+      }
+      process.exit()
+    })
   }
 
   indicators(data: any, cb: any) {
     let calculatedIndicators = {}
     async.eachOf(this.indicatorOptions, (opts: any, indicatorName: any, eachCallback: any) => {
-      if(opts.configured) {
+      if (opts.configured) {
         const inputs = _.map(opts.indicator.input_names, (i: string) => {
           return data[i = 'real' ? 'close' : i]
         })
@@ -121,7 +121,7 @@ export default class Quant {
         })
 
         tulind.indicators[opts.indicator.name].indicator(inputs, options, (err: any, outputs: any[]) => {
-          if(err) {
+          if (err) {
             eachCallback(err)
           } else {
             let calculatedIndicator = {}
@@ -151,7 +151,7 @@ export default class Quant {
         configured: false,
         indicator
       }
-      if(indicator.options == 0) {
+      if (indicator.options == 0) {
         options.configured = true
       } else {
         _.each(indicator.option_names, (n) => {
@@ -161,296 +161,12 @@ export default class Quant {
       obj[name] = options
       transformCallback()
     }, (err, ret) => {
-      if(err) {
+      if (err) {
         cb(err)
       } else {
         logger.log('info', `Options json write to ${this.optionsPath}`)
         fs.writeFile(this.optionsPath, JSON.stringify(ret, null, 2), cb)
       }
     })
-  }
-
-  trend(data: any, cb: any) {
-    async.auto({
-      EMA: (autoCallback) => {
-        /* Exponential Moving Average
-          Lagging Indicator
-          Used to identify trends and reversals, as well as to set up support
-          and resistance levels.
-        */
-        // https://www.investopedia.com/terms/e/ema.asp
-
-        const periods = [12, 26]
-
-        async.map(periods, (period, mapCallback) => {
-          tulind.indicators.ema.indicator([data.close], [period], (err, output) => {
-            let o = {}
-            o[period] = _.first(output)
-            mapCallback(err, o)
-          });
-        }, autoCallback)
-      },
-      SMA: (autoCallback) => {
-        /* Simple Moving Average
-          Lagging Indicator
-          Used to identify trends and reversals, as well as to set up support
-          and resistance levels.
-        */
-        // https://www.investopedia.com/terms/s/sma.asp
-
-        const periods = [5, 30, 50, 200]
-
-        async.map(periods, (period, mapCallback) => {
-          tulind.indicators.sma.indicator([data.close], [period], (err, output) => {
-            let o = {}
-            o[period] = _.first(output)
-            mapCallback(err, o)
-          });
-        }, autoCallback)
-      },
-      MACD: (autoCallback) => {
-        /* Moving Average Convergence Divergence (MACD)
-          Lagging Indicator
-          Used to reveal changes in the strength, direction, momentum, and duration of a trend in a stock’s price.
-        */
-        // https://www.investopedia.com/terms/m/macd.asp
-        const options = [
-          12, // short period
-          26, // long period
-          9  // signal period
-        ]
-        async.auto({
-          macdClose: (macdAutoCallback) => {
-            tulind.indicators.macd.indicator([data.close], options, (err, output) => {
-              if(err) {
-                macdAutoCallback(err)
-              } else {
-                macdAutoCallback(err, {
-                  macd: output[0],
-                  macd_signal: output[1],
-                  macd_histogram: output[2],
-                })
-              }
-            });
-          },
-        }, autoCallback)
-      },
-      PSAR: (autoCallback) => {
-        /* Parabolic Stop and Reverse (Parabolic SAR)
-          Leading Indicator
-          Used to find potential reversals in the market price direction.
-        */
-        // https://www.investopedia.com/terms/p/parabolicindicator.asp
-        const options = [
-          .02,  // acceleration factor step
-          .2,   // acceleration factor maximum
-        ]
-        tulind.indicators.psar.indicator([data.high, data.low], options, (err, output) => {
-          if (err) {
-            autoCallback(err)
-          } else {
-            autoCallback(err, _.first(output))
-          }
-        });
-      },
-    }, cb)
-  }
-
-  momentum(data: any, cb: any) {
-    async.auto({
-      stoch: (autoCallback) => {
-        /* Stochastic Oscillator
-          Leading Indicator
-          Used to predict price turning points by comparing the closing price to its price range.
-        */
-        // https://www.investopedia.com/terms/s/stochasticoscillator.asp
-        const options = [
-          14, // %k period
-          14, // %k slowing period
-          3, // %d period
-        ]
-        tulind.indicators.stoch.indicator([
-            data.high,
-            data.low,
-            data.close,
-          ], options, (err, output) => {
-          if (err) {
-            autoCallback(err)
-          } else {
-            autoCallback(err, {
-              stoch_k: output[0],
-              stoch_d: output[1],
-            })
-          }
-        });
-      },
-      CCI: (autoCallback) => {
-        /* Commodity Channel Index (CCI)
-          Leading Indicator
-          An oscillator that helps identify price reversals, price extremes, and trend strength.
-        */
-        // https://www.investopedia.com/terms/c/commoditychannelindex.asp
-        const options = [
-          20, // period
-        ]
-        tulind.indicators.cci.indicator([
-          data.high,
-          data.low,
-          data.close,
-        ], options, (err, output) => {
-          if (err) {
-            autoCallback(err)
-          } else {
-            autoCallback(err, _.first(output))
-          }
-        });
-      },
-      RSI: (autoCallback) => {
-        /* Relative Strength Index (RSI)
-          Leading Indicator
-          Measures recent trading strength, velocity of change in the trend, and magnitude of the move.
-        */
-        // https://www.investopedia.com/terms/r/rsi.asp#what-is-relative-strength-index--rsi
-        const options = [
-          14, // period
-        ]
-        tulind.indicators.rsi.indicator([
-          data.close,
-        ], options, (err, output) => {
-          if (err) {
-            autoCallback(err)
-          } else {
-            autoCallback(err, _.first(output))
-          }
-        });
-      },
-    }, cb)
-  }
-
-  volatility(data: any, cb: any) {
-    async.auto({
-      bbands: (autoCallback) => {
-        /* Bollinger bands
-          Lagging Indicator
-          Measures the “highness” or “lowness” of price, relative to previous trades.
-        */
-        // https://www.investopedia.com/terms/b/bollingerbands.asp
-        const options = [
-          20, // period
-          2, // stddev
-        ]
-        tulind.indicators.bbands.indicator([
-          data.close,
-        ], options, (err, output) => {
-          if (err) {
-            autoCallback(err)
-          } else {
-            autoCallback(err, {
-              lower: output[0],
-              middle: output[1],
-              upper: output[2],
-            })
-          }
-        });
-      },
-      atr: (autoCallback) => {
-        /* Average True Range
-          Lagging Indicator
-          Shows the degree of price volatility.
-        */
-        // https://www.investopedia.com/terms/a/atr.asp
-        const options = [
-          5, // period
-        ]
-        tulind.indicators.atr.indicator([
-          data.high,
-          data.low,
-          data.close,
-        ], options, (err, output) => {
-          if (err) {
-            autoCallback(err)
-          } else {
-            autoCallback(err, output)
-          }
-        });
-      },
-      stddev: (autoCallback) => {
-        /* Standard Deviation
-          Lagging Indicator
-          Used to measure expected risk and to determine the significance of certain price movements.
-        */
-        // https://www.investopedia.com/terms/s/standarddeviation.asp
-
-        const periods = [5, 30, 50, 200]
-
-        async.map(periods, (period, mapCallback) => {
-          tulind.indicators.stddev.indicator([data.close], [period], (err, output) => {
-            let o = {}
-            o[period] = _.first(output)
-            mapCallback(err, o)
-          });
-        }, autoCallback)
-      }
-    }, cb)
-  }
-
-  volume(data: any, cb: any) {
-    async.auto({
-      bbands: (autoCallback) => {
-        /* Chaikin Oscillator
-          Leading Indicator
-          Monitors the flow of money in and out of the market, which can help determine tops and bottoms.
-        */
-        // https://www.investopedia.com/terms/c/chaikinoscillator.asp
-        const options = [
-          10, // period
-        ]
-        tulind.indicators.cvi.indicator([
-          data.high,
-          data.low,
-        ], options, (err, output) => {
-          if (err) {
-            autoCallback(err)
-          } else {
-            autoCallback(err, output)
-          }
-        });
-      },
-      obv: (autoCallback) => {
-        /* On-Balance Volume (OBV)
-           Leading Indicator
-           Attempts to measure level of accumulation or distribution, by comparing volume to price.
-        */
-        // https://www.investopedia.com/terms/o/onbalancevolume.asp
-        const options = [
-        ]
-        tulind.indicators.obv.indicator([
-          data.close,
-          data.volume,
-        ], options, (err, output) => {
-          if (err) {
-            autoCallback(err)
-          } else {
-            autoCallback(err, output)
-          }
-        });
-      },
-      vroc: (autoCallback) => {
-        /* Volume Rate of Change
-           Lagging Indicator
-           Highlights increases in volume. These normally happen mostly at market tops, bottoms, or breakouts.
-        */
-        // https://www.investopedia.com/articles/technical/02/091002.asp
-        const periods = [14, 30]
-
-        async.map(periods, (period, mapCallback) => {
-          tulind.indicators.stddev.indicator([data.close], [period], (err, output) => {
-            let o = {}
-            o[period] = _.first(output)
-            mapCallback(err, o)
-          });
-        }, autoCallback)
-      }
-    }, cb)
   }
 }

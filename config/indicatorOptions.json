@@ -271,7 +271,7 @@
     }
   },
   "atr": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "atr",
       "full_name": "Average True Range",
@@ -291,7 +291,7 @@
         "atr"
       ]
     },
-    "period": null
+    "period": 5
   },
   "avgprice": {
     "configured": true,
@@ -315,7 +315,7 @@
     }
   },
   "bbands": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "bbands",
       "full_name": "Bollinger Bands",
@@ -336,8 +336,8 @@
         "bbands_upper"
       ]
     },
-    "period": null,
-    "stddev": null
+    "period": 20,
+    "stddev": 2
   },
   "bop": {
     "configured": true,
@@ -361,7 +361,7 @@
     }
   },
   "cci": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "cci",
       "full_name": "Commodity Channel Index",
@@ -381,7 +381,7 @@
         "cci"
       ]
     },
-    "period": null
+    "period": 20
   },
   "ceil": {
     "configured": true,
@@ -497,7 +497,7 @@
     }
   },
   "cvi": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "cvi",
       "full_name": "Chaikins Volatility",
@@ -516,7 +516,7 @@
         "cvi"
       ]
     },
-    "period": null
+    "period": 10
   },
   "decay": {
     "configured": false,
@@ -1043,7 +1043,7 @@
     }
   },
   "macd": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "macd",
       "full_name": "Moving Average Convergence/Divergence",
@@ -1065,9 +1065,9 @@
         "macd_histogram"
       ]
     },
-    "short period": null,
-    "long period": null,
-    "signal period": null
+    "short period": 12,
+    "long period": 26,
+    "signal period": 9
   },
   "marketfi": {
     "configured": true,
@@ -1364,7 +1364,7 @@
     "long period": null
   },
   "psar": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "psar",
       "full_name": "Parabolic SAR",
@@ -1384,8 +1384,8 @@
         "psar"
       ]
     },
-    "acceleration factor step": null,
-    "acceleration factor maximum": null
+    "acceleration factor step": 0.02,
+    "acceleration factor maximum": ".2"
   },
   "pvi": {
     "configured": true,
@@ -1449,6 +1449,48 @@
     },
     "period": null
   },
+  "vroc_14": {
+    "configured": true,
+    "indicator": {
+      "name": "roc",
+      "full_name": "Volume Rate of Change",
+      "type": "indicator",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "roc"
+      ]
+    },
+    "period": 14
+  },
+  "vroc_30": {
+    "configured": true,
+    "indicator": {
+      "name": "roc",
+      "full_name": "Volume Rate of Change",
+      "type": "indicator",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "roc"
+      ]
+    },
+    "period": 30
+  },
   "rocr": {
     "configured": false,
     "indicator": {
@@ -1489,7 +1531,7 @@
     }
   },
   "rsi": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "rsi",
       "full_name": "Relative Strength Index",
@@ -1507,7 +1549,7 @@
         "rsi"
       ]
     },
-    "period": null
+    "period": 14
   },
   "sin": {
     "configured": true,
@@ -1566,6 +1608,90 @@
     },
     "period": null
   },
+  "sma_5": {
+    "configured": true,
+    "indicator": {
+      "name": "sma",
+      "full_name": "Simple Moving Average",
+      "type": "overlay",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "sma"
+      ]
+    },
+    "period": 5
+  },
+  "sma_30": {
+    "configured": true,
+    "indicator": {
+      "name": "sma",
+      "full_name": "Simple Moving Average",
+      "type": "overlay",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "sma"
+      ]
+    },
+    "period": 30
+  },
+  "sma_50": {
+    "configured": true,
+    "indicator": {
+      "name": "sma",
+      "full_name": "Simple Moving Average",
+      "type": "overlay",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "sma"
+      ]
+    },
+    "period": 50
+  },
+  "sma_200": {
+    "configured": true,
+    "indicator": {
+      "name": "sma",
+      "full_name": "Simple Moving Average",
+      "type": "overlay",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "sma"
+      ]
+    },
+    "period": 200
+  },
   "sqrt": {
     "configured": true,
     "indicator": {
@@ -1605,6 +1731,90 @@
     },
     "period": null
   },
+  "stddev_5": {
+    "configured": true,
+    "indicator": {
+      "name": "stddev",
+      "full_name": "Standard Deviation Over Period",
+      "type": "math",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "stddev"
+      ]
+    },
+    "period": 5
+  },
+  "stddev_30": {
+    "configured": true,
+    "indicator": {
+      "name": "stddev",
+      "full_name": "Standard Deviation Over Period",
+      "type": "math",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "stddev"
+      ]
+    },
+    "period": 30
+  },
+  "stddev_50": {
+    "configured": true,
+    "indicator": {
+      "name": "stddev",
+      "full_name": "Standard Deviation Over Period",
+      "type": "math",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "stddev"
+      ]
+    },
+    "period": 50
+  },
+  "stddev_200": {
+    "configured": true,
+    "indicator": {
+      "name": "stddev",
+      "full_name": "Standard Deviation Over Period",
+      "type": "math",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "stddev"
+      ]
+    },
+    "period": 200
+  },
   "stderr": {
     "configured": false,
     "indicator": {
@@ -1627,7 +1837,7 @@
     "period": null
   },
   "stoch": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "stoch",
       "full_name": "Stochastic Oscillator",
@@ -1650,9 +1860,9 @@
         "stoch_d"
       ]
     },
-    "%k period": null,
-    "%k slowing period": null,
-    "%d period": null
+    "%k period": 14,
+    "%k slowing period": 14,
+    "%d period": 3
   },
   "stochrsi": {
     "configured": false,
