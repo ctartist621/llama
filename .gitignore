@@ -115,6 +115,6 @@ temp/
 # End of https://www.gitignore.io/api/node,typings
 .tags
 .tags_sorted_by_file
-# config/
+config/
 tsconfig.ref.json
 /config/prod.ts

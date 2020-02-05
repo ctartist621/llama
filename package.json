@@ -6,10 +6,11 @@
   "scripts": {
     "devHistorian_silly": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f historian",
     "devHistorian": "NODE_ENV=localDev ts-node index.ts -f historian",
-    "Historian": "NODE_ENV=prod LOG_LEVEL=info ts-node index.ts -f historian",
-    "Historian": "NODE_ENV=prod LOG_LEVEL=info ts-node index.ts -f quant",
+    "historian": "NODE_ENV=prod LOG_LEVEL=info ts-node index.ts -f historian",
+    "quant": "NODE_ENV=prod LOG_LEVEL=info ts-node index.ts -f quant",
     "devQuant": "NODE_ENV=localDev LOG_LEVEL=info ts-node index.ts -f quant",
     "heroku_historian": "NODE_ENV=heroku_dev ts-node index.ts -f historian",
+    "heroku_quant": "NODE_ENV=heroku_dev ts-node index.ts -f quant",
     "test": "NODE_ENV=localDev jest",
     "test_local": "NODE_ENV=localDev jest"
   },

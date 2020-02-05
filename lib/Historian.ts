@@ -283,7 +283,10 @@ export default class Historian {
               },
               article: (autoCallback: Function) => {
                 extract(n.url).then((article) => {
-                  this.influx.write('sentiment', symbol, { source: 'articleContent' }, _.pick(sentiment.analyze(article.content), ['score', 'comparative']), t, autoCallback)
+                  this.influx.write('indicators', symbol, {
+                    source: 'articleContent',
+                    indicator: "sentiment_AFINN-165"
+                  }, _.pick(sentiment.analyze(article.content), ['score', 'comparative']), t, autoCallback)
                 }).catch((err) => {
                   logger.log('debug', `Error extracting article for ${symbol}: ${n.title}`)
                   autoCallback()
