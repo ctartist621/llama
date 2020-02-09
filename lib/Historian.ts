@@ -18,6 +18,10 @@ const ALPACA_SYMBOL_LIMIT = 200
 const INFLUX_WRITE_LIMIT = 5000 //5000-10000
 const ALPACA_BAR_LIMIT = INFLUX_WRITE_LIMIT / ALPACA_SYMBOL_LIMIT
 
+const BACKFILL_SCALER = '10'
+const BACKFILL_UNIT = 'years'
+const BACKFILL_RANGE = `-${BACKFILL_SCALER}${_.first(BACKFILL_UNIT)}`
+
 import Logger from './Logger'
 const logger = new Logger('Historian')
 const CronJob = require('cron').CronJob;
@@ -118,7 +122,6 @@ export default class Historian {
 
     this.cronJobs.backfillBars1D.stop();
     logger.log('info', 'Stopped 1D Bar Backfill Cron')
-
   }
 
   private startCronJobs() {
@@ -149,10 +152,6 @@ export default class Historian {
     logger.log('info', `Starting ${timeframe} Backfill`)
     const symbolChunks: string[][] = _.chunk(_.shuffle(this.assets), ALPACA_SYMBOL_LIMIT)
 
-    let timePointer = moment()
-    let stopTime = moment().subtract(10, 'years')
-    let endTimes: string[] = []
-
     const tf= {
       '1D': { constant: 1, unit: 'days' },
       '15Min': { constant: 15, unit: 'minutes' },
@@ -160,54 +159,72 @@ export default class Historian {
       '1Min': { constant: 1, unit: 'minutes' },
     }
 
-    while (timePointer.isSameOrAfter(stopTime)) {
-      endTimes.push(timePointer.format())
-      timePointer.subtract(ALPACA_BAR_LIMIT * tf[timeframe].constant, tf[timeframe].unit)
-    }
-
     async.eachSeries(symbolChunks, (chunk: string[], eachChunkCallback: async.ErrorCallback) => {
-      async.eachSeries(endTimes, (end: string, eachTimeCallback: async.ErrorCallback) => {
-        async.auto({
-          getBars: (autoCallback: async.ErrorCallback) => {
-            logger.log('debug', `${timeframe} for ${chunk.length} symbols`)
-            this.alpaca.getBars(timeframe, chunk, { end }, autoCallback)
-          },
-          storeBars: ['getBars', (results: any, autoCallback: async.ErrorCallback) => {
-            const bars = _.flatten(_.map(results.getBars, (bars: IBar[], symbol: string) => {
-              return _.map(bars, (b: IAssetBar) => {
-                b.symbol = symbol
-                b.timeframe = timeframe
-                return b
-              })
-            }))
-            const lines: any[] = _.map(bars, (bar: IAssetBar) => {
-              return this.influx.getLine(bar.symbol, {
-                timeframe: bar.timeframe
-              }, {
-                open: bar.o,
-                high: bar.h,
-                low: bar.o,
-                close: bar.c,
-                volume: bar.v
-              }, bar.t)
-            })
+      async.mapLimit(chunk, ASYNC_LIMIT, (asset: string, eachAssetCallback) => {
+        this.influx.oldestBarTime(asset, timeframe, BACKFILL_RANGE, eachAssetCallback)
+      }, (err: any, times: string[]|any) => {
 
-            if (lines.length > 0) {
-              this.influx.batchWrite('marketData', lines, (err, ret) => {
-                if (err) {
-                  logger.log('error', err)
-                } else {
-                  logger.log('info', `${timeframe} Bar Backfill complete for ${_.first(chunk)} group from ${end}`)
-                }
-                autoCallback(err)
+        console.log(times)
+
+        let timePointer = moment("1970-01-01")
+
+        for (var i = times.length - 1; i >= 0; i--) {
+          if (timePointer.isSameOrBefore(times[i])) {
+            timePointer = moment(times[i])
+          }
+        }
+
+        let stopTime = moment().subtract(BACKFILL_SCALER, BACKFILL_UNIT)
+        let endTimes: string[] = []
+
+        while (timePointer.isSameOrAfter(stopTime)) {
+          endTimes.push(timePointer.format())
+          timePointer.subtract(ALPACA_BAR_LIMIT * tf[timeframe].constant, tf[timeframe].unit)
+        }
+
+        async.eachSeries(endTimes, (end: string, eachTimeCallback: async.ErrorCallback) => {
+          async.auto({
+            getBars: (autoCallback: async.ErrorCallback) => {
+              logger.log('debug', `${timeframe} for ${chunk.length} symbols`)
+              this.alpaca.getBars(timeframe, chunk, { end }, autoCallback)
+            },
+            storeBars: ['getBars', (results: any, autoCallback: async.ErrorCallback) => {
+              const bars = _.flatten(_.map(results.getBars, (bars: IBar[], symbol: string) => {
+                return _.map(bars, (b: IAssetBar) => {
+                  b.symbol = symbol
+                  b.timeframe = timeframe
+                  return b
+                })
+              }))
+              const lines: any[] = _.map(bars, (bar: IAssetBar) => {
+                return this.influx.getLine(bar.symbol, {
+                  timeframe: bar.timeframe
+                }, {
+                  open: bar.o,
+                  high: bar.h,
+                  low: bar.o,
+                  close: bar.c,
+                  volume: bar.v
+                }, bar.t)
               })
-            } else {
-              logger.log('warn', `No data to write, skipping Influx load.`)
-              autoCallback()
-            }
-          }]
-        }, ASYNC_LIMIT, eachTimeCallback)
-      }, eachChunkCallback)
+
+              if (lines.length > 0) {
+                this.influx.batchWrite('marketData', lines, (err, ret) => {
+                  if (err) {
+                    logger.log('error', err)
+                  } else {
+                    logger.log('info', `${timeframe} Bar Backfill complete for ${_.first(chunk)} group from ${end}`)
+                  }
+                  autoCallback(err)
+                })
+              } else {
+                logger.log('warn', `No data to write, skipping Influx load.`)
+                autoCallback()
+              }
+            }]
+          }, ASYNC_LIMIT, eachTimeCallback)
+        }, eachChunkCallback)
+      })
     }, (err: any) => {
       if (err) {
         logger.log('error', err)
