@@ -118,3 +118,4 @@ temp/
 config/
 tsconfig.ref.json
 /config/prod.ts
+/dump.rdb

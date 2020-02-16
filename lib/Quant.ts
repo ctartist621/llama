@@ -64,23 +64,23 @@ export default class Quant {
     this.cronJobs.analysis1D.start();
     logger.log('info', "Started 1D Analysis Cron")
 
-    // this.cronJobs.analysis15Min = new CronJob('0 21 * * MON-FRI', () => {
-    //   this.runAnalysis('15Min')
-    // }, null, true, MARKET_TIMEZONE);
-    // this.cronJobs.analysis15Min.start();
-    // logger.log('info', "Started 15Min Analysis Cron")
+    this.cronJobs.analysis15Min = new CronJob('0 21 * * MON-FRI', () => {
+      this.runAnalysis('15Min')
+    }, null, true, MARKET_TIMEZONE);
+    this.cronJobs.analysis15Min.start();
+    logger.log('info', "Started 15Min Analysis Cron")
 
-    // this.cronJobs.analysis5Min = new CronJob('*/7 7-19 * * MON-FRI', () => {
-    //   this.runAnalysis('5Min')
-    // }, null, true, MARKET_TIMEZONE);
-    // this.cronJobs.analysis5Min.start();
-    // logger.log('info', "Started 5Min Analysis Cron")
+    this.cronJobs.analysis5Min = new CronJob('*/7 7-19 * * MON-FRI', () => {
+      this.runAnalysis('5Min')
+    }, null, true, MARKET_TIMEZONE);
+    this.cronJobs.analysis5Min.start();
+    logger.log('info', "Started 5Min Analysis Cron")
 
-    // this.cronJobs.analysis1Min = new CronJob('*/3 7-19 * * MON-FRI', () => {
-    //   this.runAnalysis('1Min')
-    // }, null, true, MARKET_TIMEZONE);
-    // this.cronJobs.analysis1Min.start();
-    // logger.log('info', "Started 1Min Analysis Cron")
+    this.cronJobs.analysis1Min = new CronJob('*/3 7-19 * * MON-FRI', () => {
+      this.runAnalysis('1Min')
+    }, null, true, MARKET_TIMEZONE);
+    this.cronJobs.analysis1Min.start();
+    logger.log('info', "Started 1Min Analysis Cron")
 
     this.runAnalysis('1D')
   }
