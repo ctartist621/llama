@@ -76,7 +76,7 @@
     }
   },
   "adosc": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "adosc",
       "full_name": "Accumulation/Distribution Oscillator",
@@ -98,10 +98,10 @@
         "adosc"
       ]
     },
-    "short period": null,
-    "long period": null
+    "short period": 3,
+    "long period": 10
   },
-  "adx": {
+  "adx_14": {
     "configured": true,
     "indicator": {
       "name": "adx",
@@ -124,7 +124,7 @@
     },
     "period": 14
   },
-  "adxr": {
+  "adxr_14": {
     "configured": true,
     "indicator": {
       "name": "adxr",
@@ -167,7 +167,7 @@
     }
   },
   "apo": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "apo",
       "full_name": "Absolute Price Oscillator",
@@ -186,10 +186,10 @@
         "apo"
       ]
     },
-    "short period": null,
-    "long period": null
+    "short period": 12,
+    "long period": 26
   },
-  "aroon": {
+  "aroon_25": {
     "configured": true,
     "indicator": {
       "name": "aroon",
@@ -212,7 +212,7 @@
     },
     "period": 25
   },
-  "aroonosc": {
+  "aroonosc_25": {
     "configured": true,
     "indicator": {
       "name": "aroonosc",
@@ -270,7 +270,7 @@
       ]
     }
   },
-  "atr": {
+  "atr_5": {
     "configured": true,
     "indicator": {
       "name": "atr",
@@ -360,7 +360,7 @@
       ]
     }
   },
-  "cci": {
+  "cci_20": {
     "configured": true,
     "indicator": {
       "name": "cci",
@@ -401,8 +401,8 @@
       ]
     }
   },
-  "cmo": {
-    "configured": false,
+  "cmo_5": {
+    "configured": true,
     "indicator": {
       "name": "cmo",
       "full_name": "Chande Momentum Oscillator",
@@ -420,7 +420,49 @@
         "cmo"
       ]
     },
-    "period": null
+    "period": 5
+  },
+  "cmo_12": {
+    "configured": true,
+    "indicator": {
+      "name": "cmo",
+      "full_name": "Chande Momentum Oscillator",
+      "type": "indicator",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "cmo"
+      ]
+    },
+    "period": 12
+  },
+  "cmo_26": {
+    "configured": true,
+    "indicator": {
+      "name": "cmo",
+      "full_name": "Chande Momentum Oscillator",
+      "type": "indicator",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "cmo"
+      ]
+    },
+    "period": 26
   },
   "cos": {
     "configured": true,
@@ -496,7 +538,7 @@
       ]
     }
   },
-  "cvi": {
+  "cvi_10": {
     "configured": true,
     "indicator": {
       "name": "cvi",
@@ -518,8 +560,8 @@
     },
     "period": 10
   },
-  "decay": {
-    "configured": false,
+  "decay_12": {
+    "configured": true,
     "indicator": {
       "name": "decay",
       "full_name": "Linear Decay",
@@ -537,10 +579,10 @@
         "decay"
       ]
     },
-    "period": null
+    "period": 12
   },
-  "dema": {
-    "configured": false,
+  "dema_5": {
+    "configured": true,
     "indicator": {
       "name": "dema",
       "full_name": "Double Exponential Moving Average",
@@ -558,9 +600,51 @@
         "dema"
       ]
     },
-    "period": null
+    "period": 5
   },
-  "di": {
+  "dema_15": {
+    "configured": true,
+    "indicator": {
+      "name": "dema",
+      "full_name": "Double Exponential Moving Average",
+      "type": "overlay",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "dema"
+      ]
+    },
+    "period": 15
+  },
+  "dema_100": {
+    "configured": true,
+    "indicator": {
+      "name": "dema",
+      "full_name": "Double Exponential Moving Average",
+      "type": "overlay",
+      "inputs": 1,
+      "options": 1,
+      "outputs": 1,
+      "input_names": [
+        "real"
+      ],
+      "option_names": [
+        "period"
+      ],
+      "output_names": [
+        "dema"
+      ]
+    },
+    "period": 100
+  },
+  "di_14": {
     "configured": true,
     "indicator": {
       "name": "di",
@@ -603,7 +687,7 @@
       ]
     }
   },
-  "dm": {
+  "dm_14": {
     "configured": true,
     "indicator": {
       "name": "dm",
@@ -626,8 +710,8 @@
     },
     "period": 14
   },
-  "dpo": {
-    "configured": false,
+  "dpo_20": {
+    "configured": true,
     "indicator": {
       "name": "dpo",
       "full_name": "Detrended Price Oscillator",
@@ -645,9 +729,9 @@
         "dpo"
       ]
     },
-    "period": null
+    "period": 20
   },
-  "dx": {
+  "dx_14": {
     "configured": true,
     "indicator": {
       "name": "dx",
@@ -670,8 +754,8 @@
     },
     "period": 14
   },
-  "edecay": {
-    "configured": false,
+  "edecay_12": {
+    "configured": true,
     "indicator": {
       "name": "edecay",
       "full_name": "Exponential Decay",
@@ -689,28 +773,7 @@
         "edecay"
       ]
     },
-    "period": null
-  },
-  "ema": {
-    "configured": false,
-    "indicator": {
-      "name": "ema",
-      "full_name": "Exponential Moving Average",
-      "type": "overlay",
-      "inputs": 1,
-      "options": 1,
-      "outputs": 1,
-      "input_names": [
-        "real"
-      ],
-      "option_names": [
-        "period"
-      ],
-      "output_names": [
-        "ema"
-      ]
-    },
-    "period": null
+    "period": 12
   },
   "ema_12": {
     "configured": true,
@@ -792,8 +855,8 @@
       ]
     }
   },
-  "fisher": {
-    "configured": false,
+  "fisher_9": {
+    "configured": true,
     "indicator": {
       "name": "fisher",
       "full_name": "Fisher Transform",
@@ -813,7 +876,7 @@
         "fisher_signal"
       ]
     },
-    "period": null
+    "period": 9
   },
   "floor": {
     "configured": true,
@@ -833,8 +896,8 @@
       ]
     }
   },
-  "fosc": {
-    "configured": false,
+  "fosc_12": {
+    "configured": true,
     "indicator": {
       "name": "fosc",
       "full_name": "Forecast Oscillator",
@@ -852,10 +915,10 @@
         "fosc"
       ]
     },
-    "period": null
+    "period": 12
   },
-  "hma": {
-    "configured": false,
+  "hma_12": {
+    "configured": true,
     "indicator": {
       "name": "hma",
       "full_name": "Hull Moving Average",
@@ -873,10 +936,10 @@
         "hma"
       ]
     },
-    "period": null
+    "period": 12
   },
-  "kama": {
-    "configured": false,
+  "kama_10": {
+    "configured": true,
     "indicator": {
       "name": "kama",
       "full_name": "Kaufman Adaptive Moving Average",
@@ -894,10 +957,10 @@
         "kama"
       ]
     },
-    "period": null
+    "period": 10
   },
   "kvo": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "kvo",
       "full_name": "Klinger Volume Oscillator",
@@ -919,8 +982,8 @@
         "kvo"
       ]
     },
-    "short period": null,
-    "long period": null
+    "short period": 34,
+    "long period": 55
   },
   "lag": {
     "configured": false,
@@ -943,8 +1006,8 @@
     },
     "period": null
   },
-  "linreg": {
-    "configured": false,
+  "linreg_3": {
+    "configured": true,
     "indicator": {
       "name": "linreg",
       "full_name": "Linear Regression",
@@ -962,7 +1025,7 @@
         "linreg"
       ]
     },
-    "period": null
+    "period": 3
   },
   "linregintercept": {
     "configured": false,
@@ -1341,7 +1404,7 @@
     }
   },
   "ppo": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "ppo",
       "full_name": "Percentage Price Oscillator",
@@ -1360,8 +1423,8 @@
         "ppo"
       ]
     },
-    "short period": null,
-    "long period": null
+    "short period": 12,
+    "long period": 26
   },
   "psar": {
     "configured": true,
