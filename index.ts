@@ -2,6 +2,7 @@
 
 import Historian from './lib/Historian'
 import Quant from './lib/Quant'
+import Broker from './lib/Broker'
 
 import Alpaca from './lib/Alpaca'
 import Influx from './lib/Influx'
@@ -33,6 +34,11 @@ if(program.function) {
     case "quant":
       logger.log('info', "Starting Quant")
       const quant = new Quant(alpaca, influx, redis)
+      break;
+
+    case "broker":
+      logger.log('info', "Starting Broker")
+      const broker = new Broker(alpaca, influx, redis)
       break;
 
     default:
