@@ -102,7 +102,7 @@
     "long period": null
   },
   "adx": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "adx",
       "full_name": "Average Directional Movement Index",
@@ -122,10 +122,10 @@
         "dx"
       ]
     },
-    "period": null
+    "period": 14
   },
   "adxr": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "adxr",
       "full_name": "Average Directional Movement Rating",
@@ -145,7 +145,7 @@
         "dx"
       ]
     },
-    "period": null
+    "period": 14
   },
   "ao": {
     "configured": true,
@@ -190,7 +190,7 @@
     "long period": null
   },
   "aroon": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "aroon",
       "full_name": "Aroon",
@@ -210,10 +210,10 @@
         "aroon_up"
       ]
     },
-    "period": null
+    "period": 25
   },
   "aroonosc": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "aroonosc",
       "full_name": "Aroon Oscillator",
@@ -232,7 +232,7 @@
         "aroonosc"
       ]
     },
-    "period": null
+    "period": 25
   },
   "asin": {
     "configured": true,
@@ -561,7 +561,7 @@
     "period": null
   },
   "di": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "di",
       "full_name": "Directional Indicator",
@@ -582,7 +582,7 @@
         "minus_di"
       ]
     },
-    "period": null
+    "period": 14
   },
   "div": {
     "configured": true,
@@ -604,7 +604,7 @@
     }
   },
   "dm": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "dm",
       "full_name": "Directional Movement",
@@ -624,7 +624,7 @@
         "minus_dm"
       ]
     },
-    "period": null
+    "period": 14
   },
   "dpo": {
     "configured": false,
@@ -648,7 +648,7 @@
     "period": null
   },
   "dx": {
-    "configured": false,
+    "configured": true,
     "indicator": {
       "name": "dx",
       "full_name": "Directional Movement Index",
@@ -668,7 +668,7 @@
         "dx"
       ]
     },
-    "period": null
+    "period": 14
   },
   "edecay": {
     "configured": false,
