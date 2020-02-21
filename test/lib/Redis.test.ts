@@ -1,5 +1,5 @@
 import Redis from '../../lib/Redis'
-import R from 'ioredis'
+import R from 'redis'
 import 'jest-extended'
 import config from 'config'
 

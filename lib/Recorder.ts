@@ -4,34 +4,24 @@ import _ from 'lodash'
 import async from 'async'
 
 import Alpaca from './Alpaca'
-import Influx from './Influx'
 import Redis from './Redis'
 
 const ASYNC_LIMIT = 10
 
-const ALPACA_SYMBOL_LIMIT = 200
-const INFLUX_WRITE_LIMIT = 5000 //5000-10000
-const ALPACA_BAR_LIMIT = INFLUX_WRITE_LIMIT / ALPACA_SYMBOL_LIMIT
-
 import Logger from './Logger'
 const logger = new Logger('Recorder')
-const CronJob = require('cron').CronJob;
-
-const MARKET_TIMEZONE = 'America/New_York'
 
 export default class Recorder {
   private alpaca: any
   private alpacaClient: any
-  private influx: Influx
   private redis: Redis
 
   private cronJobs: any
   // public assets: string[]
   private feeds: string[]
 
-  constructor(a: Alpaca, i: Influx, r: Redis) {
+  constructor(a: Alpaca, r: Redis) {
     this.alpaca = a
-    this.influx = i
     this.redis = r
     this.feeds = [
       'trade_updates',
@@ -64,16 +54,31 @@ export default class Recorder {
       logger.log("debug", `Account updates: ${JSON.stringify(data)}`)
     })
     this.alpaca.websocket.onStockTrades((subject, data) => {
-      logger.log("debug", `Stock trades: ${subject}, ${data}`)
+      this.parseStreamMessage(subject, data)
+      // logger.log("debug", `Stock trades: ${subject}, ${data}`)
     })
     this.alpaca.websocket.onStockQuotes((subject, data) => {
-      logger.log("debug", `Stock quotes: ${subject}, ${data}`)
+      this.parseStreamMessage(subject, data)
+      // logger.log("debug", `Stock quotes: ${subject}, ${data}`)
     })
     this.alpaca.websocket.onStockAggSec((subject, data) => {
-      logger.log("debug", `Stock agg sec: ${subject}, ${data}`)
+      // logger.log("debug", `Stock agg sec: ${subject}, ${data}`)
     })
     this.alpaca.websocket.onStockAggMin((subject, data) => {
-      logger.log("debug", `Stock agg min: ${subject}, ${data}`)
+      // logger.log("debug", `Stock agg min: ${subject}, ${data}`)
     })
+  }
+
+  parseStreamMessage(subject, data) {
+    const messages = JSON.parse(data)
+
+    async.each(messages, (message: NStream.NStocks.IQuote | NStream.NStocks.IQuote, eachCallback: Function) => {
+      this.redis.storeStreamMessage(message, eachCallback)
+    }, (err) => {
+      if(err) {
+        logger.log("error", "err")
+      }
+    })
+
   }
 }
