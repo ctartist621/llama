@@ -32,6 +32,11 @@ export default class Recorder {
       'AM.*',
     ]
 
+    setInterval(() => {
+      const used = process.memoryUsage().heapUsed / 1024 / 1024;
+      logger.log("debug", `Recorder uses approximately ${Math.round(used * 100) / 100} MB`);
+    }, 1000)
+
     this.alpaca.websocket.connect()
 
     this.alpaca.websocket.onConnect(() => {
@@ -54,31 +59,18 @@ export default class Recorder {
       logger.log("debug", `Account updates: ${JSON.stringify(data)}`)
     })
     this.alpaca.websocket.onStockTrades((subject, data) => {
-      this.parseStreamMessage(subject, data)
-      // logger.log("debug", `Stock trades: ${subject}, ${data}`)
+      this.redis.storeStreamMessage(data)
+      logger.log("debug", `Stock trades: ${subject}, ${data}`)
     })
     this.alpaca.websocket.onStockQuotes((subject, data) => {
-      this.parseStreamMessage(subject, data)
-      // logger.log("debug", `Stock quotes: ${subject}, ${data}`)
+      this.redis.storeStreamMessage(data)
+      logger.log("debug", `Stock quotes: ${subject}, ${data}`)
     })
     this.alpaca.websocket.onStockAggSec((subject, data) => {
-      // logger.log("debug", `Stock agg sec: ${subject}, ${data}`)
+      logger.log("debug", `Stock agg sec: ${subject}, ${data}`)
     })
     this.alpaca.websocket.onStockAggMin((subject, data) => {
-      // logger.log("debug", `Stock agg min: ${subject}, ${data}`)
+      logger.log("debug", `Stock agg min: ${subject}, ${data}`)
     })
-  }
-
-  parseStreamMessage(subject, data) {
-    const messages = JSON.parse(data)
-
-    async.each(messages, (message: NStream.NStocks.IQuote | NStream.NStocks.IQuote, eachCallback: Function) => {
-      this.redis.storeStreamMessage(message, eachCallback)
-    }, (err) => {
-      if(err) {
-        logger.log("error", "err")
-      }
-    })
-
   }
 }

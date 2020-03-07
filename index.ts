@@ -4,6 +4,8 @@ import Broker from './lib/Broker'
 import Historian from './lib/Historian'
 import Quant from './lib/Quant'
 import Recorder from './lib/Recorder'
+import CryptoRecorder from './lib/CryptoRecorder'
+import Processor from './lib/Processor'
 
 import Alpaca from './lib/Alpaca'
 import Influx from './lib/Influx'
@@ -21,7 +23,7 @@ const program = require('commander')
 console.log("Starting Llama")
 
 program
-  .option('-f, --function <function>', 'Function to perform (Historian, Quant, Broker, Recorder')
+  .option('-f, --function <function>', 'Function to perform (Historian, Quant, Broker, Recorder, Processor, cryptoRecorder')
   .option('-c, --quantConfig', 'Generate Quant Options Template. WARNING: This will overwrite an existing config file')
   .parse(process.argv);
 
@@ -44,7 +46,17 @@ if(program.function) {
 
     case "recorder":
       logger.log('info', "Starting Recorder")
-      const recorder = new Recorder(alpaca, influx, redis)
+      const cryptoRecorder = new Recorder(alpaca, redis)
+      break;
+
+    case "cryptoRecorder":
+      logger.log('info', "Starting Crypto Recorder")
+      const recorder = new CryptoRecorder(redis)
+      break;
+
+    case "processor":
+      logger.log('info', "Starting Processor")
+      const processor = new Processor(influx, redis)
       break;
 
     default:

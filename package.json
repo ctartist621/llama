@@ -11,13 +11,17 @@
     "recorder": "NODE_ENV=antsle LOG_LEVEL=debug ts-node index.ts -f recorder",
     "devQuant": "NODE_ENV=localAntsle LOG_LEVEL=info ts-node index.ts -f quant",
     "devBroker": "NODE_ENV=localAntsle LOG_LEVEL=silly ts-node index.ts -f broker",
+    "devCryptoRecorderLocal": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f cryptoRecorder",
     "devRecorderLocal": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f recorder",
+    "devProcessorLocal": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f processor",
     "heroku_historian": "NODE_ENV=heroku_dev ts-node index.ts -f historian",
     "heroku_quant": "NODE_ENV=heroku_dev ts-node index.ts -f quant",
     "test": "NODE_ENV=localDev jest",
     "test_local": "NODE_ENV=localDev jest",
     "buildnPush": "docker build -f ./Llama.dockerfile . -t ctartist621/llama:latest; docker push ctartist621/llama:latest",
-    "ptLogspout": "docker run --restart=always -d -v=/var/run/docker.sock:/var/run/docker.sock gliderlabs/logspout syslog+tls://logs6.papertrailapp.com:46794"
+    "ptLogspout": "docker run --restart=always -d -v=/var/run/docker.sock:/var/run/docker.sock gliderlabs/logspout syslog+tls://logs6.papertrailapp.com:46794",
+    "influxdb": "docker run --restart=always -d -v influxdb:/var/lib/influxdb influxdb -n influxdb -P",
+    "redis": "docker run --restart=always -d -v redis:/data redis -n redis -P"
   },
   "author": "David B Mittelman",
   "license": "UNLICENSED",
@@ -41,7 +45,8 @@
     "sentiment": "^5.0.2",
     "talib": "^1.1.3",
     "tulind": "^0.8.18",
-    "winston": "^3.2.1"
+    "winston": "^3.2.1",
+    "ws": "^7.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.8.3",
