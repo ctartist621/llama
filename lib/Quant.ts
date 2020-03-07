@@ -95,17 +95,25 @@ export default class Quant {
         data: (autoCallback) => {
           this.influx.queryMarketData(asset, timeframe, moment().subtract(1, 'year').format(), moment().format(), true, autoCallback)
         },
-        indicators: ['data', (results: any, autoCallback) => {
+        tulindIndicators: ['data', (results: any, autoCallback) => {
           if (_.isEmpty(results.data)) {
             logger.log('warn', `No Data for ${asset}`)
             autoCallback()
           } else {
-            this.indicators(results.data, autoCallback)
+            this.tulindIndicators(results.data, autoCallback)
           }
         }],
-        storeIndicators: ['indicators', (results: any, autoCallback) => {
+        customIndicators: ['data', (results: any, autoCallback) => {
+          if (_.isEmpty(results.data)) {
+            logger.log('warn', `No Data for ${asset}`)
+            autoCallback()
+          } else {
+            this.customIndicators(asset, results.data, autoCallback)
+          }
+        }],
+        storeTulindIndicators: ['tulindIndicators', (results: any, autoCallback) => {
           let lines: any[] = []
-          async.forEachOfLimit(results.indicators, ASYNC_LIMIT, (indicatorData: any, indicatorName: any, eachIndicatorCallback: any) => {
+          async.forEachOfLimit(results.tulindIndicators, ASYNC_LIMIT, (indicatorData: any, indicatorName: any, eachIndicatorCallback: any) => {
             for (var i = _.keys(indicatorData).length - 1; i >= 0; i--) {
               for (var j = results.data.time.length - 1; j >= 0; j--) {
                 if (_.isFinite(indicatorData[_.keys(indicatorData)[i]][j])) {
@@ -176,6 +184,44 @@ export default class Quant {
     }, (err: any) => {
       cb(err, calculatedIndicators)
     })
+  }
+
+  customIndicators(asset: string, data: any, cb: any) {
+    let d: any[] = []
+    for (var i = data.time.length - 1; i >= 0; i--) {
+      d.push({
+        l: data.low[i],
+        h: data.high[i],
+        p: data.open[i],
+        c: data.close[i],
+        v: data.volume[i],
+        t: data.time[i],
+      })
+    }
+    async.auto({
+      ulcerIndex: (autoCallback) => {
+        const PERIOD = 14
+        for (var i = 0; i < d.length - PERIOD; ++i) {
+          const window = _.slice(d, i, i + PERIOD)
+          if (window.length == 14) {
+            const maxClose = _.maxBy(window, (b) => { return b.c }).c
+            let percentDrawdown: number[] = []
+            for (var j = 0; j < window.length; ++j) {
+              percentDrawdown.push(100*(window[j].c-maxClose)/maxClose)
+            }
+            const sumR = _.reduce(percentDrawdown, (sum, r) => {
+              return sum + Math.pow(r,2)
+            }, 0)
+            d[i].ui = Math.sqrt(sumR/PERIOD)
+          } else {
+            // End of usable data
+          }
+        }
+
+        process.exit()
+        autoCallback()
+      }
+    }, cb)
   }
 
   static get optionsPath(): string {

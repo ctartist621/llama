@@ -7,6 +7,16 @@ import Logger from "./Logger"
 const logger = new Logger("Influx")
 const parse = require('csv-parse')
 
+const WINDOW = 5
+
+
+const TIMEFRAME = {
+  '1D': { constant: 1, unit: 'days', i: '1d' },
+  '15Min': { constant: 15, unit: 'minutes', i: '15m' },
+  '5Min': { constant: 5, unit: 'minutes', i: '5m' },
+  '1Min': { constant: 1, unit: 'minutes', i: '1m' },
+}
+
 export default class Influx {
   options: any
   conf: any
@@ -82,6 +92,49 @@ export default class Influx {
         cb(err || body)
       } else {
         // logger.log('silly', `Query successful`)
+        const s = _.split(_.trim(body, '\r\n'), '\r\n\r\n')
+        async.map(s, (table: string, mapCallback) => {
+          parse(table, { columns: true }, (err, j) => {
+            if (err) {
+              mapCallback(err)
+            } else {
+              mapCallback(err, _.first(_.flattenDeep(_.map(j, '_time'))))
+            }
+          })
+        }, (err, ret) => {
+          if (err) {
+            cb(err)
+          } else {
+            cb(err, _.first(ret))
+          }
+        })
+      }
+    })
+  }
+
+  getIndicatorDerivatives(asset: string, timeframe: string, cb: any) {
+    let o = this.options
+    o.headers.Accept = "application/csv"
+    o.headers["Content-type"] = "application/vnd.flux"
+
+    const range = `-${WINDOW * 2 * TIMEFRAME[timeframe].constant}${_.first(TIMEFRAME[timeframe].unit)}`
+
+    const query = `from(bucket: "indicators")
+      |> range(start: ${range})
+      |> filter(fn: (r) => r._measurement == "${asset}")
+      |> filter(fn: (r) => r.timeframe == "${timeframe}")
+      |> derivative(unit: ${TIMEFRAME[timeframe].i}, nonNegative: true, columns: ["_value"], timeColumn: "_time")
+      |> movingAverage(n: ${WINDOW})
+      |> yield(name: "derivative")`
+
+    needle.post(`${this.endpoints.query}`, query, o, function(err: any, resp: any, body: any) {
+      if (err || body.code) {
+        logger.log('error', JSON.stringify(err || body))
+        cb(err || body)
+      } else {
+        // logger.log('silly', `Query successful`)
+        console.log(body)
+        process.exit()
         const s = _.split(_.trim(body, '\r\n'), '\r\n\r\n')
         async.map(s, (table: string, mapCallback) => {
           parse(table, { columns: true }, (err, j) => {

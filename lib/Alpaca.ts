@@ -14,8 +14,10 @@ const ALPACA_RATE_LIMIT = 200 // 200/min https://docs.alpaca.markets/api-documen
 export default class Alpaca {
   client: any
   limiter: Limiter.RateLimiter
+  websocket: any
   constructor() {
     this.client = new A(config.get('alpaca'))
+    this.websocket = this.client.websocket
     this.limiter = new Limiter.RateLimiter(ALPACA_RATE_LIMIT, 'minute')
   }
 
@@ -27,7 +29,6 @@ export default class Alpaca {
         logger.log('silly', `Remaining Alpaca requests: ${remainingRequests}`)
       }
       if (err) {
-        console.log(err)
         cb(err)
       } else {
         func

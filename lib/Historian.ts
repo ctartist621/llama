@@ -164,8 +164,6 @@ export default class Historian {
         this.influx.oldestBarTime(asset, timeframe, BACKFILL_RANGE, eachAssetCallback)
       }, (err: any, times: string[]|any) => {
 
-        console.log(times)
-
         let timePointer = moment("1970-01-01")
 
         for (var i = times.length - 1; i >= 0; i--) {
@@ -182,7 +180,7 @@ export default class Historian {
           timePointer.subtract(ALPACA_BAR_LIMIT * tf[timeframe].constant, tf[timeframe].unit)
         }
 
-        async.eachSeries(endTimes, (end: string, eachTimeCallback: async.ErrorCallback) => {
+        async.eachLimit(endTimes, ASYNC_LIMIT, (end: string, eachTimeCallback: async.ErrorCallback) => {
           async.auto({
             getBars: (autoCallback: async.ErrorCallback) => {
               logger.log('debug', `${timeframe} for ${chunk.length} symbols`)

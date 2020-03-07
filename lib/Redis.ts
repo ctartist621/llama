@@ -1,13 +1,14 @@
-import R from 'ioredis'
+import R from 'redis'
 import config from 'config'
 import async from 'async'
+const _ = require('lodash')
 
 const ASYNC_LIMIT = 10
 
 export default class Redis {
   client: R
   constructor() {
-    this.client = new R(config.get('redis'))
+    this.client = R.createClient(config.get('redis'))
   }
 
   queueObj(list: String, item, cb: Function) {
@@ -41,6 +42,10 @@ export default class Redis {
 
   getAssetList(cb: any) {
     this.client.smembers('assets', cb)
+  }
+
+  storeStreamMessage(message: NStream.NStocks.IQuote | NStream.NStocks.IQuote, cb: Function) {
+    this.client.xadd('marketData', '*', "message", JSON.stringify(message), cb)
   }
 
 }
