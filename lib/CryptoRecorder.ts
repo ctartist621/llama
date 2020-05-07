@@ -3,7 +3,7 @@
 import _ from 'lodash'
 import async from 'async'
 
-import Alpaca from './Alpaca'
+import needle from 'needle'
 import Redis from './Redis'
 
 const ASYNC_LIMIT = 10
@@ -13,7 +13,6 @@ const logger = new Logger('Crypto Recorder')
 
 
 const WebSocket = require('ws');
-
 
 export default class CryptoRecorder {
   private redis: Redis
@@ -26,35 +25,38 @@ export default class CryptoRecorder {
 
     this.coinbaseFeed = new WebSocket('wss://ws-feed.pro.coinbase.com');
 
-    this.coinbaseFeed.on('open', () => {
-      console.log("Websocket opened")
-      this.coinbaseFeed.send(JSON.stringify({
-        "type": "subscribe",
-        "product_ids": [
-          "ETH-USD",
-          "ETH-EUR"
-        ],
-        "channels": [
-          "level2",
-          "heartbeat",
-          {
-            "name": "ticker",
-            "product_ids": [
-              "ETH-BTC",
-              "ETH-USD"
+    needle.get('https://api.gdax.com//products', (err, products) => {
+      if (err) {
+        throw err;
+      } else {
+        console.log(products)
+        console.log(_.map(products.body, 'id'))
+        this.coinbaseFeed.on('open', () => {
+          console.log("Websocket opened")
+          this.coinbaseFeed.send(JSON.stringify({
+            "type": "subscribe",
+            "product_ids": _.map(products.body, 'id'),
+            "channels": [
+              "level2",
+              "heartbeat",
+              {
+                "name": "ticker",
+                "product_ids": _.map(products.body, 'id')
+              }
             ]
-          }
-        ]
-      }))
+          }))
+        })
+      }
     })
 
     this.coinbaseFeed.on('close', () => {
       console.log("Websocket disconected")
     })
 
-    this.coinbaseFeed.on('message', function incoming(data) {
-      console.log('message');
-      console.log(data);
+    this.coinbaseFeed.on('message', (data) => {
+      let d = data
+      this.redis.storeStreamMessage('cryptoMarketData',data)
+      logger.log('silly', data)
     })
 
 

@@ -96,7 +96,7 @@ export default class Quant {
       logger.log('info', `Started ${timeframe} Analysis of ${asset}`)
       async.auto({
         data: (autoCallback) => {
-          this.influx.queryMarketData(asset, timeframe, moment().subtract(1, 'year').format(), moment().format(), true, autoCallback)
+          this.influx.queryStockMarketData(asset, timeframe, moment().subtract(1, 'year').format(), moment().format(), true, autoCallback)
         },
         tulindIndicators: ['data', (results: any, autoCallback) => {
           if (_.isEmpty(results.data)) {

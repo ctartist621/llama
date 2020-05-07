@@ -32,7 +32,8 @@ export default class Influx {
     }
     this.endpoints = {
       write: `${this.conf.host}/api/v2/write?org=${this.conf.org}`,
-      query: `${this.conf.host}/api/v2/query?org=${this.conf.org}`
+      query: `${this.conf.host}/api/v2/query?org=${this.conf.org}`,
+      buckets: `${this.conf.host}/api/v2/buckets`
     }
   }
 
@@ -41,11 +42,15 @@ export default class Influx {
     let fStr: string = ""
 
     for (let t in tags) {
-      tStr += `,${t}=${tags[t]}`
+      if (t !== 'c' && tags[t]) {
+        tStr += `,${t}=${tags[t]}`
+      }
     }
 
     for (let f in fields) {
-      fStr += `,${f}=${fields[f]}`
+      if (fields[f]) {
+        fStr += `,${f}=${fields[f]}`
+      }
     }
 
     return `${measurement}${tStr} ${_.trimStart(fStr, ',')} ${timestamp}`
@@ -54,12 +59,16 @@ export default class Influx {
   write(bucket: string, measurement: string, tags: any, fields: any, timestamp: Number, precision: string, cb: Function) {
     const line = this.getLine(measurement, tags, fields, timestamp)
     needle.post(`${this.endpoints.write}&bucket=${bucket}&precision=${precision}`, line, this.options, function(err, resp, body) {
-      if (err) {
-        logger.log('error', err)
+      if (err || body.code == 'invalid') {
+        logger.log('error', err || body.message)
+        console.log(line)
+        console.log(measurement, tags, fields, timestamp)
+        process.exit()
+        cb(err || body.message, body)
       } else {
         logger.log('silly', `Point recorded: ${line}, ${JSON.stringify(body)}`)
+        cb(err, body)
       }
-      cb(err, body)
     })
   }
 
@@ -74,12 +83,23 @@ export default class Influx {
     })
   }
 
+  listAllBuckets(cb: Function) {
+    needle.get(`${this.endpoints.buckets}`, this.options, function(err, resp, body) {
+      if (err) {
+        logger.log('error', err)
+      } else {
+        logger.log('silly', `Buckets retrieved`)
+      }
+      cb(err, body.buckets)
+    })
+  }
+
   oldestBarTime(asset: string, timeframe: string, range: string, cb: any) {
     let o = this.options
     o.headers.Accept = "application/csv"
     o.headers["Content-type"] = "application/vnd.flux"
 
-    const query = `from(bucket: "marketData")
+    const query = `from(bucket: "stockMarketData")
       |> range(start: ${range})
       |> filter(fn: (r) => r._field == "close")
       |> filter(fn: (r) => r._measurement == "${asset}")
@@ -155,12 +175,12 @@ export default class Influx {
     })
   }
 
-  queryMarketData(asset: string, timeframe: string, start: string, stop: string, columnArray=true, cb: Function) {
+  queryStockMarketData(asset: string, timeframe: string, start: string, stop: string, columnArray=true, cb: Function) {
     let o = this.options
     o.headers.Accept = "application/csv"
     o.headers["Content-type"] = "application/vnd.flux"
 
-    const query = `from(bucket: "marketData")
+    const query = `from(bucket: "stockMarketData")
       |> range(start: -100d)
       |> filter(fn: (r) => r._measurement == "${asset}")
       |> filter(fn: (r) => r.timeframe == "${timeframe}")`

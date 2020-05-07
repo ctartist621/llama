@@ -6,6 +6,8 @@ import async from 'async'
 import Alpaca from './Alpaca'
 import Redis from './Redis'
 
+const heapdump = require("heapdump")
+
 const ASYNC_LIMIT = 10
 
 import Logger from './Logger'
@@ -34,7 +36,8 @@ export default class Recorder {
 
     setInterval(() => {
       const used = process.memoryUsage().heapUsed / 1024 / 1024;
-      logger.log("debug", `Recorder uses approximately ${Math.round(used * 100) / 100} MB`);
+      logger.log("info", `Recorder uses approximately ${Math.round(used * 100) / 100} MB`);
+      // heapdump.writeSnapshot()
     }, 1000)
 
     this.alpaca.websocket.connect()
@@ -59,11 +62,11 @@ export default class Recorder {
       logger.log("debug", `Account updates: ${JSON.stringify(data)}`)
     })
     this.alpaca.websocket.onStockTrades((subject, data) => {
-      this.redis.storeStreamMessage(data)
+      this.redis.storeStreamMessage('stockMarketData', data)
       logger.log("debug", `Stock trades: ${subject}, ${data}`)
     })
     this.alpaca.websocket.onStockQuotes((subject, data) => {
-      this.redis.storeStreamMessage(data)
+      this.redis.storeStreamMessage('stockMarketData', data)
       logger.log("debug", `Stock quotes: ${subject}, ${data}`)
     })
     this.alpaca.websocket.onStockAggSec((subject, data) => {

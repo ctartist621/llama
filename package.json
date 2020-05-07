@@ -4,24 +4,32 @@
   "description": "Day Trading Bot",
   "main": "index.ts",
   "scripts": {
-    "devHistorian_silly": "NODE_ENV=localAntsle LOG_LEVEL=silly ts-node index.ts -f historian",
-    "devHistorian": "NODE_ENV=localAntsle ts-node index.ts -f historian",
     "historian": "NODE_ENV=antsle LOG_LEVEL=info ts-node index.ts -f historian",
     "quant": "NODE_ENV=antsle LOG_LEVEL=info ts-node index.ts -f quant",
-    "recorder": "NODE_ENV=antsle LOG_LEVEL=debug ts-node index.ts -f recorder",
+    "recorder": "NODE_ENV=antsle LOG_LEVEL=info ts-node index.ts -f recorder",
+    "processor": "NODE_ENV=antsle LOG_LEVEL=info ts-node index.ts -f processor",
+
+    "devHistorian_silly": "NODE_ENV=localAntsle LOG_LEVEL=silly ts-node index.ts -f historian",
+    "devHistorian": "NODE_ENV=localAntsle ts-node index.ts -f historian",
     "devQuant": "NODE_ENV=localAntsle LOG_LEVEL=info ts-node index.ts -f quant",
     "devBroker": "NODE_ENV=localAntsle LOG_LEVEL=silly ts-node index.ts -f broker",
-    "devCryptoRecorderLocal": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f cryptoRecorder",
-    "devRecorderLocal": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f recorder",
-    "devProcessorLocal": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f processor",
+    "devHistorianLocal": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f historian",
+    "devCryptoRecorderLocal": "NODE_ENV=localAntsle LOG_LEVEL=silly ts-node index.ts -f cryptoRecorder",
+    "devRecorderLocal": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts -f/register --inspect index.ts -f recorder",
+    "devProcessorLocal": "NODE_ENV=localDev LOG_LEVEL=silly ts-node index.ts - recorder",
+
+    "inspectRecorderLocal": "NODE_ENV=localDev LOG_LEVEL=silly node -r ts-nodef processor",
     "heroku_historian": "NODE_ENV=heroku_dev ts-node index.ts -f historian",
     "heroku_quant": "NODE_ENV=heroku_dev ts-node index.ts -f quant",
+
     "test": "NODE_ENV=localDev jest",
     "test_local": "NODE_ENV=localDev jest",
     "buildnPush": "docker build -f ./Llama.dockerfile . -t ctartist621/llama:latest; docker push ctartist621/llama:latest",
+
     "ptLogspout": "docker run --restart=always -d -v=/var/run/docker.sock:/var/run/docker.sock gliderlabs/logspout syslog+tls://logs6.papertrailapp.com:46794",
-    "influxdb": "docker run --restart=always -d -v influxdb:/var/lib/influxdb influxdb -n influxdb -P",
-    "redis": "docker run --restart=always -d -v redis:/data redis -n redis -P"
+    "influxdb": "docker run --restart=always -d -v influxdb:/hdd/influxdb --name influxdb -P quay.io/influxdb/influxdb",
+    "redis": "docker run --restart=always -d -v redis:/hdd/redis --name redis -P redis",
+    "dockerHistorian": "docker run --restart=always --name Historian ctartist621/llama yarn historian"
   },
   "author": "David B Mittelman",
   "license": "UNLICENSED",
@@ -57,6 +65,7 @@
     "@types/lodash": "^4.14.149",
     "@types/node": "^13.5.0",
     "babel-jest": "^25.1.0",
+    "heapdump": "^0.3.15",
     "jest": "^25.1.0",
     "jest-extended": "^0.11.4",
     "ts-jest": "^25.0.0",
