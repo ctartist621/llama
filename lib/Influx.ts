@@ -61,9 +61,9 @@ export default class Influx {
     needle.post(`${this.endpoints.write}&bucket=${bucket}&precision=${precision}`, line, this.options, function(err, resp, body) {
       if (err || body.code == 'invalid') {
         logger.log('error', err || body.message)
-        console.log(line)
-        console.log(measurement, tags, fields, timestamp)
-        process.exit()
+        // console.log(line)
+        // console.log(measurement, tags, fields, timestamp)
+        // process.exit()
         cb(err || body.message, body)
       } else {
         logger.log('silly', `Point recorded: ${line}, ${JSON.stringify(body)}`)
@@ -72,15 +72,30 @@ export default class Influx {
     })
   }
 
-  batchWrite(bucket: string, lines: string[], precision: string, cb: Function) {
-    needle.post(`${this.endpoints.write}&bucket=${bucket}&precision=${precision}`, _.join(lines, '\n'), this.options, function(err, resp, body) {
-      if (err) {
-        logger.log('error', err)
-      } else {
-        logger.log('silly', `${lines.length} Points recorded`)
+  batchWrite(bucket: string, lines: string[], precision: string, cb: any) {
+    let func: any = async.retry({
+      times: 10,
+      interval: function(retryCount) {
+        const INTERVAL = 50 * Math.pow(2, retryCount)
+        logger.log('debug', `Retrying to Store Batch Write after ${INTERVAL}ms`)
+        return INTERVAL;
       }
-      cb(err, body)
-    })
+    }, (retryCallback) => {
+      console.log("Trying to write to Influx")
+      try {
+        needle.post(`${this.endpoints.write}&bucket=${bucket}&precision=${precision}`, _.join(lines, '\n'), this.options, function(err, resp, body) {
+          if (err || body.code == 'invalid') {
+            logger.log('error', err || body.message)
+          } else {
+            logger.log('silly', `${lines.length} Points recorded`)
+          }
+          retryCallback(err, body)
+        })
+      } catch (e) {
+        logger.log('error', e)
+        retryCallback(e)
+      }
+    }, cb);
   }
 
   listAllBuckets(cb: Function) {

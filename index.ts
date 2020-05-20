@@ -23,6 +23,7 @@ console.log("Starting Llama")
 
 program
   .option('-f, --function <function>', 'Function to perform (Historian, Quant, Broker, Recorder, Processor, cryptoRecorder')
+  .option('-s, --subscription <subscription>', 'Channels for Recorder subscribe to (Trades, Quotes, Aggs, Updates')
   .option('-c, --quantConfig', 'Generate Quant Options Template. WARNING: This will overwrite an existing config file')
   .parse(process.argv);
 
@@ -71,7 +72,7 @@ if(program.function) {
       alpaca = new Alpaca()
       redis = new Redis()
       const Recorder = require('./lib/Recorder').default
-      const recorder = new Recorder(alpaca, redis)
+      const recorder = new Recorder(alpaca, redis, program.subscription)
       break;
 
     case "cryptoRecorder":
@@ -107,3 +108,44 @@ if(program.function) {
     }
   })
 }
+
+
+// if(program.function == 'recorder') {
+
+//   /**
+//    * Simple userland heapdump generator using v8-profiler
+//    * Usage: require('[path_to]/HeapDump').init('datadir')
+//    *
+//    * @module HeapDump
+//    * @type {exports}
+//    */
+//   var profiler = require('heapdump');
+//   var nextMBThreshold = 0;
+//   /**
+//    * Init and scheule heap dump runs
+//    *
+//    * @param datadir Folder to save the data to
+//    */
+//   setInterval(tickHeapDump, 500);
+//   /**
+//    * Schedule a heapdump by the end of next tick
+//    */
+// }
+
+// function tickHeapDump() {
+//   setImmediate(function() {
+//     heapDump();
+//   });
+// }
+// /**
+//  * Creates a heap dump if the currently memory threshold is exceeded
+//  */
+// function heapDump() {
+//   var memMB = process.memoryUsage().rss / 1048576;
+//   console.log(memMB + '>' + nextMBThreshold);
+//   if (memMB > nextMBThreshold) {
+//     console.log('Current memory usage: %j', process.memoryUsage());
+//     nextMBThreshold = memMB;
+//     profiler.writeSnapshot('/Users/dave/code/llama/heapdumps/' + Date.now() + '.heapsnapshot');
+//   }
+// }

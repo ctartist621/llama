@@ -114,7 +114,8 @@ export default class Processor {
                         break;
                       default:
                         logger.log('warn', `Unrecognized Update: ${JSON.stringify(update)}`)
-                        eachCallback2(`Unrecognized Update: ${JSON.stringify(update)}`)
+                        eachCallback2()
+                        // eachCallback2(`Unrecognized Update: ${JSON.stringify(update)}`)
                         break;
                     }
                   }, autoCallback2)
@@ -160,7 +161,6 @@ export default class Processor {
 
   processTrade(message, cb) {
     this.redis.updateQuoteBookWithTrade(message, (err, results) => {
-      console.log(results)
       cb(err, results)
     })
     // this.influx.write('trades', message.sym, {

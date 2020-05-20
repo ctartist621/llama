@@ -3,7 +3,6 @@ import config from 'config'
 import async from 'async'
 const _ = require('lodash')
 
-
 import Logger from "./Logger"
 const logger = new Logger("Redis")
 
@@ -57,6 +56,22 @@ export default class Redis {
 
   storeStreamMessage(streamName: string, message: any) {
     this.client.xadd(streamName, '*', "message", message)
+
+    // let func: any = async.retry({
+    //   times: 10,
+    //   interval: function(retryCount) {
+    //     const INTERVAL = 50 * Math.pow(2, retryCount)
+    //     logger.log('debug', `Retrying to Store Stream Message after ${INTERVAL}ms`)
+    //     return INTERVAL;
+    //   }
+    // }, (retryCallback) => {
+    //     this.client.xadd(streamName, '*', "message", message, retryCallback)
+    // }, (err, result) => {
+    //   if(err) {
+    //     logger.log('error', err)
+    //   }
+    //   func = null
+    // });
   }
 
   readStreamInterator(streamName: string, count: number, cb: Function) {

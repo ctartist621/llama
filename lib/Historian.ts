@@ -15,8 +15,8 @@ import Redis from './Redis'
 const ASYNC_LIMIT = 10
 
 const ALPACA_SYMBOL_LIMIT = 200
-const INFLUX_WRITE_LIMIT = 5000 //5000-10000
-const ALPACA_BAR_LIMIT = INFLUX_WRITE_LIMIT / ALPACA_SYMBOL_LIMIT
+const INFLUX_WRITE_LIMIT = 100 //5000-10000
+const ALPACA_BAR_LIMIT = Math.floor(INFLUX_WRITE_LIMIT / ALPACA_SYMBOL_LIMIT)
 
 const BACKFILL_SCALER = '10'
 const BACKFILL_UNIT = 'years'
@@ -103,6 +103,7 @@ export default class Historian {
 
     this.startCronJobs()
 
+    this.fetchBars('1Min', ALPACA_BAR_LIMIT)
     // this.backfillBars('1D', ALPACA_BAR_LIMIT)
   }
 
