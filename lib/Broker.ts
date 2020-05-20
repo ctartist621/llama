@@ -5,6 +5,7 @@ import async from 'async'
 import Alpaca from './Alpaca'
 import Influx from './Influx'
 import Redis from './Redis'
+import TipRanks from './TipRanks'
 
 import moment from 'moment'
 import tulind from 'tulind'
@@ -26,6 +27,7 @@ export default class Broker {
   alpaca: any
   influx: Influx
   redis: Redis
+  tipRanks: TipRanks
 
   assets: string[]
   private cronJobs: any
@@ -36,15 +38,18 @@ export default class Broker {
     this.redis = r
     this.assets = []
     this.cronJobs = {}
+    this.tipRanks = new TipRanks()
 
-    this.redis.getAssetList((err: any, assets: string[]) => {
-      if(err) {
-        logger.error(err)
-      } else {
-        this.assets = assets
-        this.startAnalysis()
-      }
-    })
+    this.tipRanks.getData("AAPL", ()=>{})
+
+    // this.redis.getAssetList((err: any, assets: string[]) => {
+    //   if(err) {
+    //     logger.error(err)
+    //   } else {
+    //     this.assets = assets
+    //     this.startAnalysis()
+    //   }
+    // })
   }
 
   private startAnalysis() {
@@ -79,15 +84,31 @@ export default class Broker {
 
   // Get indicators, determine buy / sell / hold, determine position enter / exit price and volume
   runAnalysis(timeframe: string, assets?: string[]) {
+    // https://www.investopedia.com/top-7-technical-analysis-tools-4773275
+    // On Balance Volume
+    // Accumulation/Distribution Line
+
     async.eachLimit(this.assets, ASYNC_LIMIT, (asset, eachCallback) => {
-      this.influx.getIndicatorDerivatives(asset, timeframe, (err, results) => {
-        console.log(results)
-        eachCallback(err)
-      })
+      async.auto({
+        tipranks: (autoCallback) => {
+          this.getTipRanksData(asset, autoCallback)
+        },
+      }, eachCallback)
+      // this.influx.getIndicatorDerivatives(asset, timeframe, (err, results) => {
+      //   console.log(results)
+      //   eachCallback(err)
+      // })
     }, (err) => {
       if(err) {
         logger.log('error', err)
       }
+    })
+  }
+
+  getTipRanksData(asset: string, cb: any) {
+    this.tipRanks.getData(asset, (err, res) => {
+      console.log(err, res)
+      process.exit()
     })
   }
 }

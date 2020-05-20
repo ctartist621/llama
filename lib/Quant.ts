@@ -22,6 +22,8 @@ const MARKET_TIMEZONE = 'America/New_York'
 
 const OPTIONS_PATH = './config/indicatorOptions.json'
 
+const WRITE_PRECISION = 's'
+
 export default class Quant {
   alpaca: any
   influx: Influx
@@ -64,23 +66,23 @@ export default class Quant {
     this.cronJobs.analysis1D.start();
     logger.log('info', "Started 1D Analysis Cron")
 
-    this.cronJobs.analysis15Min = new CronJob('0 21 * * MON-FRI', () => {
-      this.runAnalysis('15Min')
-    }, null, true, MARKET_TIMEZONE);
-    this.cronJobs.analysis15Min.start();
-    logger.log('info', "Started 15Min Analysis Cron")
+    // this.cronJobs.analysis15Min = new CronJob('0 21 * * MON-FRI', () => {
+    //   this.runAnalysis('15Min')
+    // }, null, true, MARKET_TIMEZONE);
+    // this.cronJobs.analysis15Min.start();
+    // logger.log('info', "Started 15Min Analysis Cron")
 
-    this.cronJobs.analysis5Min = new CronJob('*/7 7-19 * * MON-FRI', () => {
-      this.runAnalysis('5Min')
-    }, null, true, MARKET_TIMEZONE);
-    this.cronJobs.analysis5Min.start();
-    logger.log('info', "Started 5Min Analysis Cron")
+    // this.cronJobs.analysis5Min = new CronJob('*/7 7-19 * * MON-FRI', () => {
+    //   this.runAnalysis('5Min')
+    // }, null, true, MARKET_TIMEZONE);
+    // this.cronJobs.analysis5Min.start();
+    // logger.log('info', "Started 5Min Analysis Cron")
 
-    this.cronJobs.analysis1Min = new CronJob('*/3 7-19 * * MON-FRI', () => {
-      this.runAnalysis('1Min')
-    }, null, true, MARKET_TIMEZONE);
-    this.cronJobs.analysis1Min.start();
-    logger.log('info', "Started 1Min Analysis Cron")
+    // this.cronJobs.analysis1Min = new CronJob('*/3 7-19 * * MON-FRI', () => {
+    //   this.runAnalysis('1Min')
+    // }, null, true, MARKET_TIMEZONE);
+    // this.cronJobs.analysis1Min.start();
+    // logger.log('info', "Started 1Min Analysis Cron")
 
     this.runAnalysis('1D')
   }
@@ -89,11 +91,12 @@ export default class Quant {
 
     assets = assets ? assets : this.assets
     // https://www.visualcapitalist.com/12-types-technical-indicators-stocks/
-    async.eachLimit(assets, ASYNC_LIMIT, (asset, eachAssetCallback) => {
+    // async.eachLimit(assets, ASYNC_LIMIT, (asset, eachAssetCallback) => {
+    async.eachSeries(assets, (asset, eachAssetCallback) => {
       logger.log('info', `Started ${timeframe} Analysis of ${asset}`)
       async.auto({
         data: (autoCallback) => {
-          this.influx.queryMarketData(asset, timeframe, moment().subtract(1, 'year').format(), moment().format(), true, autoCallback)
+          this.influx.queryStockMarketData(asset, timeframe, moment().subtract(1, 'year').format(), moment().format(), true, autoCallback)
         },
         tulindIndicators: ['data', (results: any, autoCallback) => {
           if (_.isEmpty(results.data)) {
@@ -128,7 +131,26 @@ export default class Quant {
               }
             }
             if (lines.length > 0) {
-              this.influx.batchWrite('indicators', lines, (err, ret) => {
+              this.influx.batchWrite('indicators', lines, WRITE_PRECISION, (err, ret) => {
+                if (err) {
+                  logger.log('error', err)
+                } else {
+                  logger.log('debug', `Indicators stored for ${asset}`)
+                }
+                eachIndicatorCallback(err)
+              })
+            } else {
+              logger.log('debug', `No data to write, skipping Influx load.`)
+              eachIndicatorCallback()
+            }
+          }, autoCallback)
+        }],
+        storeCustomIndicators: ['customIndicators', (results: any, autoCallback) => {
+          let lines: any[] = []
+          async.forEachOfLimit(results.customIndicators, ASYNC_LIMIT, (indicatorData: any, indicatorName: any, eachIndicatorCallback: any) => {
+
+            if (lines.length > 0) {
+              this.influx.batchWrite('indicators', lines, WRITE_PRECISION, (err, ret) => {
                 if (err) {
                   logger.log('error', err)
                 } else {
@@ -155,7 +177,7 @@ export default class Quant {
     })
   }
 
-  indicators(data: any, cb: any) {
+  tulindIndicators(data: any, cb: any) {
     let calculatedIndicators = {}
     async.eachOf(this.indicatorOptions, (opts: any, indicatorName: any, eachCallback: any) => {
       if (opts.configured) {
@@ -200,6 +222,8 @@ export default class Quant {
     }
     async.auto({
       ulcerIndex: (autoCallback) => {
+        // https://www.investopedia.com/terms/u/ulcerindex.asp
+        let ui: any[]
         const PERIOD = 14
         for (var i = 0; i < d.length - PERIOD; ++i) {
           const window = _.slice(d, i, i + PERIOD)

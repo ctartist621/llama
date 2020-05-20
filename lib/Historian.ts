@@ -15,8 +15,8 @@ import Redis from './Redis'
 const ASYNC_LIMIT = 10
 
 const ALPACA_SYMBOL_LIMIT = 200
-const INFLUX_WRITE_LIMIT = 5000 //5000-10000
-const ALPACA_BAR_LIMIT = INFLUX_WRITE_LIMIT / ALPACA_SYMBOL_LIMIT
+const INFLUX_WRITE_LIMIT = 100 //5000-10000
+const ALPACA_BAR_LIMIT = Math.floor(INFLUX_WRITE_LIMIT / ALPACA_SYMBOL_LIMIT)
 
 const BACKFILL_SCALER = '10'
 const BACKFILL_UNIT = 'years'
@@ -27,6 +27,8 @@ const logger = new Logger('Historian')
 const CronJob = require('cron').CronJob;
 
 const MARKET_TIMEZONE = 'America/New_York'
+
+const WRITE_PRECISION = 's'
 
 export default class Historian {
   private alpaca: any
@@ -101,6 +103,7 @@ export default class Historian {
 
     this.startCronJobs()
 
+    this.fetchBars('1Min', ALPACA_BAR_LIMIT)
     // this.backfillBars('1D', ALPACA_BAR_LIMIT)
   }
 
@@ -207,7 +210,7 @@ export default class Historian {
               })
 
               if (lines.length > 0) {
-                this.influx.batchWrite('marketData', lines, (err, ret) => {
+                this.influx.batchWrite('marketData', lines, WRITE_PRECISION, (err, ret) => {
                   if (err) {
                     logger.log('error', err)
                   } else {
@@ -264,7 +267,7 @@ export default class Historian {
           })
 
           if (lines.length > 0) {
-            this.influx.batchWrite('marketData', lines, autoCallback)
+            this.influx.batchWrite('marketData', lines, WRITE_PRECISION, autoCallback)
           } else {
             logger.log('warn', `No data to write, skipping Influx load.`)
             autoCallback()
@@ -291,17 +294,17 @@ export default class Historian {
             const t = moment(n.timestamp).unix()
             async.auto({
               title: (autoCallback: Function) => {
-                this.influx.write('sentiment', symbol, { source: 'title' }, _.pick(sentiment.analyze(n.title), ['score', 'comparative']), t, autoCallback)
+                this.influx.write('sentiment', symbol, { source: 'title' }, _.pick(sentiment.analyze(n.title), ['score', 'comparative']), t, WRITE_PRECISION, autoCallback)
               },
               summary: (autoCallback: Function) => {
-                this.influx.write('sentiment', symbol, { source: 'summary' }, _.pick(sentiment.analyze(n.summary), ['score', 'comparative']), t, autoCallback)
+                this.influx.write('sentiment', symbol, { source: 'summary' }, _.pick(sentiment.analyze(n.summary), ['score', 'comparative']), t, WRITE_PRECISION, autoCallback)
               },
               article: (autoCallback: Function) => {
                 extract(n.url).then((article) => {
                   this.influx.write('indicators', symbol, {
                     source: 'articleContent',
                     indicator: "sentiment_AFINN-165"
-                  }, _.pick(sentiment.analyze(article.content), ['score', 'comparative']), t, autoCallback)
+                  }, _.pick(sentiment.analyze(article.content), ['score', 'comparative']), t, WRITE_PRECISION, autoCallback)
                 }).catch((err) => {
                   logger.log('debug', `Error extracting article for ${symbol}: ${n.title}`)
                   autoCallback()

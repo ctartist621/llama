@@ -9,15 +9,15 @@ const logger = new Logger("Alpaca")
 import Limiter from 'limiter'
 import retry from 'retry'
 
-const ALPACA_RATE_LIMIT = 200 // 200/min https://docs.alpaca.markets/api-documentation/api-v2/
+const ALPACA_RATE_LIMIT = 50 // 200/min https://docs.alpaca.markets/api-documentation/api-v2/
 
 export default class Alpaca {
   client: any
   limiter: Limiter.RateLimiter
-  websocket: any
+  data_ws: any
   constructor() {
     this.client = new A(config.get('alpaca'))
-    this.websocket = this.client.websocket
+    this.data_ws = this.client.data_ws
     this.limiter = new Limiter.RateLimiter(ALPACA_RATE_LIMIT, 'minute')
   }
 
@@ -29,6 +29,7 @@ export default class Alpaca {
         logger.log('silly', `Remaining Alpaca requests: ${remainingRequests}`)
       }
       if (err) {
+        logger.log('error', err)
         cb(err)
       } else {
         func
@@ -42,6 +43,15 @@ export default class Alpaca {
       logger.log('info', `Retrieved ${assets.length} asset records`)
       cb(undefined, assets)
     }).catch(cb);
+
+    this.throttle(func, cb)
+  }
+
+  getAnalysts(symbol: string, cb: Function) {
+    const func = this.client.getAnalysts(symbol)
+      .then((news: IAsset) => {
+        cb(undefined, news)
+      }).catch(cb);
 
     this.throttle(func, cb)
   }
@@ -63,30 +73,40 @@ export default class Alpaca {
       maxTimeout: Infinity,
       randomize: true,
     })
-
+    console.log("Trying to retrieve bars")
     symbols = _.isArray(symbols) ? _.join(symbols, ',') : symbols
     const func = operation.attempt((currentAttempt) => {
-      this.client.getBars(timeframe, symbols, options)
-        .then((bars: IBar) => {
-          logger.log('debug', `${timeframe} Bars retrieved ${symbols}`)
-          cb(undefined, bars)
-        }).catch((err) => {
-          logger.log('error', err)
-          if (err = 'StatusCodeError: 500 - {"code":50010000,"message":"internal server error occurred"}') {
-            logger.log('warn', `Alpaca server error, skipping ${symbols} ${timeframe}`)
-            cb()
-          } else {
-            logger.log('warn', `Retrying bar request ${symbols} ${timeframe}`)
-            if (operation.retry(err)) {
-              return
+      try {
+        this.client.getBars(timeframe, symbols, options)
+          .then((bars: IBar) => {
+            console.log("Bars block")
+            logger.log('debug', `${timeframe} Bars retrieved ${symbols}`)
+            cb(undefined, bars)
+          }).catch((err) => {
+            console.log("Error block")
+            console.log(err)
+            logger.log('error', err)
+            if (err = 'StatusCodeError: 500 - {"code":50010000,"message":"internal server error occurred"}') {
+              logger.log('warn', `Alpaca server error, skipping ${symbols} ${timeframe}`)
+              cb()
             } else {
-              cb(err ? operation.mainError() : null);
+              logger.log('warn', `Retrying bar request ${symbols} ${timeframe}`)
+              if (operation.retry(err)) {
+                return
+              } else {
+                cb(err ? operation.mainError() : null);
+              }
             }
-          }
-        });
+          });
+        } catch(e) {
+          console.log('catch block')
+          console.log(e)
+          return
+        }
+      })
 
-      this.throttle(func, cb)
-    })
+    this.throttle(func, cb)
+
   }
 
   getClock(cb: Function) {
