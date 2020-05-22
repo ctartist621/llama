@@ -3,13 +3,15 @@
 const A = require('@alpacahq/alpaca-trade-api')
 import config from 'config'
 import _ from 'lodash'
+import async from 'async'
 
 import Logger from "./Logger"
 const logger = new Logger("Alpaca")
 import Limiter from 'limiter'
+import needle from 'needle'
 import retry from 'retry'
 
-const ALPACA_RATE_LIMIT = 50 // 200/min https://docs.alpaca.markets/api-documentation/api-v2/
+const ALPACA_RATE_LIMIT = 200 // 200/min https://docs.alpaca.markets/api-documentation/api-v2/
 
 export default class Alpaca {
   client: any
@@ -36,6 +38,90 @@ export default class Alpaca {
       }
     })
   }
+
+  createOrder(order: IOrder, cb: Function) {
+    const func = this.client.createOrder(order)
+      .then((order: IOrder) => {
+        logger.log('info', `Order created`)
+        cb(undefined, order)
+      }).catch(cb);
+
+    this.throttle(func, cb)
+  }
+
+  getOrders(cb: Function) {
+    const func = this.client.getOrders({})
+      .then((orders: IOrder[]) => {
+        logger.log('info', `Orders Retrieved`)
+        cb(undefined, orders)
+      }).catch(cb);
+
+    this.throttle(func, cb)
+  }
+
+
+  getAccount(cb: Function) {
+    const func = this.client.getAccount({})
+      .then((account: IAccount) => {
+        logger.log('info', `Retrieved account record`)
+        cb(undefined, account)
+      }).catch(cb);
+
+    this.throttle(func, cb)
+  }
+
+  getPositions(cb: Function) {
+    const func = this.client.getPositions({})
+      .then((positions: IPosition[]) => {
+        logger.log('info', `Retrieved ${positions.length} position records`)
+        cb(undefined, positions)
+      }).catch(cb);
+
+    this.throttle(func, cb)
+  }
+
+  getPosition(symbol: string, cb: Function) {
+    const func = this.client.getPosition(symbol)
+      .then((position: IPosition[]) => {
+        logger.log('info', `Retrieved ${symbol} position record`)
+        cb(undefined, position)
+      }).catch(cb);
+
+    this.throttle(func, cb)
+  }
+
+  getWatchlistAssets(cb: any) {
+    const func = needle('get', `${config.get('alpaca').baseUrl}/v2/watchlists`, {
+      headers: {
+        'APCA-API-KEY-ID': config.get('alpaca').keyId,
+        'APCA-API-SECRET-KEY': config.get('alpaca').secretKey,
+      }
+    }).then((watchlists: { body: IWatchlist[] }) => {
+      logger.log('info', `Retrieved ${watchlists.body.length} watchlists records`)
+      async.map(watchlists.body, (watchlist: IWatchlist, mapCallback) => {
+        const funcAsset = needle('get', `${config.get('alpaca').baseUrl}/v2/watchlists/${watchlist.id}`, {
+          headers: {
+            'APCA-API-KEY-ID': config.get('alpaca').keyId,
+            'APCA-API-SECRET-KEY': config.get('alpaca').secretKey,
+          }
+        }).then((assets: { body: IWatchlist }) => {
+          mapCallback(undefined, assets.body.assets)
+        }).catch(mapCallback)
+
+        this.throttle(funcAsset, cb)
+      }, (err, assets) => {
+        if(err) {
+          cb(err)
+        } else {
+          cb(err, _.flatten(assets))
+        }
+      })
+
+    }).catch(cb);
+
+    this.throttle(func, cb)
+  }
+
 
   getAllAssets(cb: Function) {
     const func = this.client.getAssets({})

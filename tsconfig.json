@@ -14,5 +14,11 @@
       "typings",
       "node_modules/@types/"
     ]
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "node_modules/@types/moment-timezone/moment-timezone.d.ts",
+    "node_modules/moment-timezone/index.d.ts"
+  ]
+
 }
