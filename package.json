@@ -36,7 +36,7 @@
     "@influxdata/influx": "^0.5.5",
     "@types/moment-timezone": "^0.5.12",
     "article-parser": "^4.1.1",
-    "async": "^3.1.1",
+    "async": "^3.2.2",
     "commander": "^4.1.0",
     "config": "^3.2.4",
     "cron": "^1.8.2",
